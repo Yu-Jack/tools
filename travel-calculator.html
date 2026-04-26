@@ -81,8 +81,38 @@
     }
 
     /* ── Rate bar ── */
+    /* ── Currency pills ── */
+    .currency-pills {
+      display: flex;
+      gap: .35rem;
+      flex-wrap: wrap;
+    }
+    .currency-pill {
+      padding: .2rem .62rem;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      background: none;
+      font-family: 'Noto Sans TC', sans-serif;
+      font-size: .73rem;
+      color: var(--ink-light);
+      cursor: pointer;
+      transition: all .18s;
+      white-space: nowrap;
+      line-height: 1.6;
+    }
+    .currency-pill.active {
+      background: var(--ink);
+      color: var(--paper);
+      border-color: var(--ink);
+    }
+    .currency-pill:hover:not(.active) {
+      border-color: var(--sakura);
+      color: var(--sakura);
+    }
+
     .rate-bar {
       display: flex;
+      flex-wrap: wrap;
       align-items: center;
       gap: .9rem;
       padding: .9rem 1.4rem;
@@ -130,12 +160,76 @@
       margin-left: auto;
     }
 
+    /* ── Mode toggle ── */
+    .mode-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 1.2rem;
+    }
+    .mode-tab {
+      flex: 1;
+      padding: .55rem .6rem;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      font-family: 'Shippori Mincho', serif;
+      font-size: .75rem;
+      letter-spacing: .16em;
+      color: var(--ink-light);
+      cursor: pointer;
+      transition: color .18s, border-color .18s;
+      margin-bottom: -1px;
+    }
+    .mode-tab.active {
+      color: var(--sakura);
+      border-bottom-color: var(--sakura);
+    }
+    .mode-tab:hover:not(.active) { color: var(--ink); }
+
+    /* reverse result */
+    .rev-result {
+      display: none;
+      margin-top: 1rem;
+      padding: .75rem 1rem;
+      background: var(--bg-alt);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      font-family: 'Shippori Mincho', serif;
+      font-size: .88rem;
+      letter-spacing: .06em;
+      color: var(--ink-light);
+      align-items: center;
+      gap: .6rem;
+    }
+    .rev-result.show { display: flex; }
+    .rev-result .rev-value {
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: var(--indigo);
+    }
+    .rev-result .rev-add {
+      margin-left: auto;
+      padding: .32rem .9rem;
+      background: var(--ink);
+      color: var(--paper);
+      border: none;
+      border-radius: 2px;
+      font-family: 'Shippori Mincho', serif;
+      font-size: .8rem;
+      letter-spacing: .1em;
+      cursor: pointer;
+      transition: background .18s;
+    }
+    .rev-result .rev-add:hover { background: var(--sakura); }
+
     /* ── Input card ── */
     .input-card {
-      padding: 1.4rem 1.5rem;
+      padding: 0;
+      overflow: hidden;
       margin-bottom: 1.2rem;
       animation: fadeUp .5s .16s ease both;
     }
+    .input-card-inner { padding: 1.1rem 1.5rem 1.4rem; }
     .card-label {
       font-family: 'Shippori Mincho', serif;
       font-size: .66rem;
@@ -174,8 +268,52 @@
     }
     .field input.error { border-color: var(--sakura) !important; }
 
+    /* ── Note row ── */
+    .note-row {
+      margin-top: .75rem;
+    }
+    .note-row input {
+      width: 100%;
+      padding: .48rem .8rem;
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      background: var(--bg);
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: .95rem;
+      color: var(--ink);
+      transition: border-color .18s, box-shadow .18s;
+    }
+    .note-row input:focus {
+      outline: none;
+      border-color: var(--sakura);
+      box-shadow: 0 0 0 3px var(--sakura-pale);
+    }
+    .note-row input::placeholder { color: var(--border); }
+
+    /* note cell in table */
+    td.note-cell {
+      text-align: left;
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: .82rem;
+      color: var(--ink-light);
+      max-width: 160px;
+    }
+    td.note-cell.empty { color: var(--border); }
+
+    /* per-person price sub-annotation */
+    .price-sub {
+      display: block;
+      font-size: .7rem;
+      color: var(--ink-light);
+      font-style: italic;
+      margin-top: .18rem;
+      white-space: nowrap;
+    }
+
     .add-btn {
-      padding: .58rem 1.4rem;
+      padding: .5rem;
       background: var(--ink);
       color: var(--paper);
       border: none;
@@ -209,6 +347,54 @@
       color: var(--ink-light);
       text-transform: uppercase;
     }
+    /* ── Save button ── */
+    .save-btn {
+      padding: .28rem .85rem;
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      font-family: 'Shippori Mincho', serif;
+      font-size: .72rem;
+      letter-spacing: .14em;
+      color: var(--ink-light);
+      cursor: pointer;
+      transition: all .18s;
+      display: flex;
+      align-items: center;
+      gap: .35rem;
+    }
+    .save-btn:hover {
+      border-color: var(--gold);
+      color: var(--gold);
+    }
+    .save-btn.saved {
+      border-color: var(--gold);
+      color: var(--gold);
+    }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(12px);
+      background: var(--ink);
+      color: var(--paper);
+      padding: .55rem 1.4rem;
+      border-radius: 3px;
+      font-family: 'Shippori Mincho', serif;
+      font-size: .8rem;
+      letter-spacing: .1em;
+      opacity: 0;
+      transition: opacity .22s, transform .22s;
+      pointer-events: none;
+      z-index: 999;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
     .badge {
       font-size: .68rem;
       color: var(--sakura);
@@ -357,10 +543,10 @@
 
   <!-- Exchange Rate -->
   <div class="card rate-bar">
-    <span class="flag">🇯🇵</span>
-    <span class="label">匯率設定</span>
-    <div class="rate-eq">
-      <span>1 JPY =</span>
+    <span class="label">幣別</span>
+    <div class="currency-pills" id="currencyPills"></div>
+    <div class="rate-eq" style="margin-left:auto">
+      <span>1 <span id="rateCode">JPY</span> =</span>
       <input type="number" id="rateInput" value="0.2" min="0.001" step="0.001">
       <span>TWD</span>
     </div>
@@ -370,21 +556,61 @@
 
   <!-- Input -->
   <div class="card input-card">
-    <div class="card-label">新增行程費用</div>
-    <div class="input-row">
-      <div class="field">
-        <label>人數</label>
-        <input type="number" id="fPeople" min="1" value="1" placeholder="人">
+    <!-- Mode tabs -->
+    <div class="mode-tabs">
+      <button class="mode-tab active" id="tabFwd" type="button">正算　人數 × 每晚/人 × 天數</button>
+      <button class="mode-tab" id="tabRev" type="button">反算　總金額 ÷ 人數 ÷ 天數</button>
+    </div>
+
+    <!-- Forward mode -->
+    <div class="input-card-inner" id="modeFwd">
+      <div class="card-label">新增行程費用</div>
+      <div class="input-row">
+        <div class="field">
+          <label>人數</label>
+          <input type="number" id="fPeople" min="1" value="1" placeholder="人">
+        </div>
+        <div class="field">
+          <label>每晚 / 人（<span id="fPriceLabel">JPY</span>）</label>
+          <input type="number" id="fPrice" min="0" value="" placeholder="2000">
+        </div>
+        <div class="field">
+          <label>天數（晚）</label>
+          <input type="number" id="fNights" min="1" value="1" placeholder="晚">
+        </div>
+        <button class="add-btn" type="button" id="addBtn">＋ 新增</button>
       </div>
-      <div class="field">
-        <label>每晚 / 人（NT$）</label>
-        <input type="number" id="fPrice" min="0" value="" placeholder="2000">
+      <div class="note-row">
+        <input type="text" id="fNote" placeholder="備注（選填）：飯店名稱、景點…" maxlength="60">
       </div>
-      <div class="field">
-        <label>天數（晚）</label>
-        <input type="number" id="fNights" min="1" value="1" placeholder="晚">
+    </div>
+
+    <!-- Reverse mode -->
+    <div class="input-card-inner" id="modeRev" style="display:none">
+      <div class="card-label">反推每晚每人費用</div>
+      <div class="input-row">
+        <div class="field">
+          <label>總金額（<span id="rTotalLabel">JPY</span>）</label>
+          <input type="number" id="rTotal" min="0" value="" placeholder="18000">
+        </div>
+        <div class="field">
+          <label>人數</label>
+          <input type="number" id="rPeople" min="1" value="1" placeholder="人">
+        </div>
+        <div class="field">
+          <label>天數（晚）</label>
+          <input type="number" id="rNights" min="1" value="1" placeholder="晚">
+        </div>
+        <button class="add-btn" type="button" id="calcRevBtn">計　算</button>
       </div>
-      <button class="add-btn" type="button" id="addBtn">＋ 新增</button>
+      <div class="note-row">
+        <input type="text" id="rNote" placeholder="備注（選填）：飯店名稱、景點…" maxlength="60">
+      </div>
+      <div class="rev-result" id="revResult">
+        <span>每晚每人</span>
+        <span class="rev-value" id="revValue"></span>
+        <button class="rev-add" type="button" id="revAddBtn">＋ 加入明細</button>
+      </div>
     </div>
   </div>
 
@@ -392,7 +618,10 @@
   <div class="card results-card">
     <div class="results-header">
       <h2>費用明細</h2>
-      <span class="badge" id="badge">0 筆</span>
+      <div style="display:flex;align-items:center;gap:.7rem">
+        <button class="save-btn" type="button" id="saveBtn">💾 儲存明細</button>
+        <span class="badge" id="badge">0 筆</span>
+      </div>
     </div>
     <table>
       <thead>
@@ -401,17 +630,17 @@
           <th>人數</th>
           <th>每晚/人</th>
           <th>天數</th>
-          <th>台幣總計</th>
-          <th>日幣總計</th>
+          <th>原幣總計</th>
+          <th>≈ 台幣</th>
+          <th style="text-align:left">備注</th>
           <th>刪除</th>
         </tr>
       </thead>
       <tbody id="tbody"></tbody>
       <tfoot id="tfoot" style="display:none">
         <tr class="total-row">
-          <td colspan="4">合　計</td>
+          <td colspan="6">台幣合計</td>
           <td class="total-twd" id="totalTWD"></td>
-          <td class="total-jpy" id="totalJPY"></td>
           <td></td>
         </tr>
       </tfoot>
@@ -420,26 +649,65 @@
 
 </div>
 
-<script>
-  var rows = [];
-  var uid = 0;
+<div class="toast" id="toast"></div>
 
-  function getEl(id) { return document.getElementById(id); }
-  function getRate() { return parseFloat(getEl('rateInput').value) || 0.2; }
-  function fmt(n) { return n.toLocaleString('zh-TW'); }
+<script>
+  var CURRENCIES = [
+    { code: 'TWD', flag: '🇹🇼', symbol: 'NT$',   name: '台幣', defaultRate: 1  },
+    { code: 'JPY', flag: '🇯🇵', symbol: '¥',   name: '日圓', defaultRate: 0.2   },
+    { code: 'KRW', flag: '🇰🇷', symbol: '₩',   name: '韓元', defaultRate: 0.023 },
+    { code: 'USD', flag: '🇺🇸', symbol: 'US$', name: '美元', defaultRate: 32.5  },
+    { code: 'EUR', flag: '🇪🇺', symbol: '€',   name: '歐元', defaultRate: 35.5  },
+    { code: 'THB', flag: '🇹🇭', symbol: '฿',   name: '泰銖', defaultRate: 0.95  },
+  ];
+
+  var rows = [];
+  var uid  = 0;
+  var activeCurrIdx = 0;
+
+  function getEl(id)  { return document.getElementById(id); }
+  function fmt(n)     { return n.toLocaleString('zh-TW'); }
+  function getCurr()  { return CURRENCIES[activeCurrIdx]; }
+  function getRate()  { return parseFloat(getEl('rateInput').value) || getCurr().defaultRate; }
+
+  // ── Currency pills ──
+  function buildPills() {
+    var container = getEl('currencyPills');
+    container.innerHTML = '';
+    CURRENCIES.forEach(function(c, i) {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'currency-pill' + (i === activeCurrIdx ? ' active' : '');
+      btn.textContent = c.flag + ' ' + c.code;
+      btn.dataset.idx = i;
+      container.appendChild(btn);
+    });
+  }
+
+  function selectCurrency(idx) {
+    activeCurrIdx = idx;
+    getEl('rateInput').value = getCurr().defaultRate;
+    buildPills();
+    updateRateInfo();
+  }
 
   function updateRateInfo() {
     var r = getRate();
-    getEl('rateInfo').textContent = '1 TWD ≈ ' + (1 / r).toFixed(2) + ' JPY';
+    var c = getCurr();
+    getEl('rateCode').textContent     = c.code;
+    getEl('rateInfo').textContent     = '1 TWD ≈ ' + (1 / r).toFixed(2) + ' ' + c.code;
+    getEl('fPriceLabel').textContent  = c.code;
+    getEl('rTotalLabel').textContent  = c.code;
   }
 
+  // ── Render table ──
   function render() {
     var tbody = getEl('tbody');
     tbody.innerHTML = '';
 
     if (rows.length === 0) {
       tbody.innerHTML =
-        '<tr><td colspan="7" style="padding:0;border:none;">' +
+        '<tr><td colspan="8" style="padding:0;border:none;">' +
         '<div class="empty-state"><div class="empty-icon">✈️</div>' +
         '<p>尚無費用項目，點選「＋ 新增」開始規劃</p></div></td></tr>';
       getEl('tfoot').style.display = 'none';
@@ -447,72 +715,159 @@
       return;
     }
 
-    var exchRate = getRate();
     var grandTWD = 0;
-
     for (var i = 0; i < rows.length; i++) {
       var row = rows[i];
-      grandTWD += row.twd;
-      var jpy = Math.round(row.twd / exchRate);
+      grandTWD += row.twdTotal;
+      var priceSub = '';
+      if (row.currency !== 'TWD') {
+        var twdPer = Math.round(row.priceOrig * row.rateAtEntry);
+        priceSub = '<span class="price-sub">≈ NT$ ' + fmt(twdPer) + '&nbsp;&nbsp;@' + row.rateAtEntry + '</span>';
+      }
       var tr = document.createElement('tr');
       tr.id = 'r' + row.id;
       tr.className = 'row-in';
       tr.innerHTML =
         '<td>' + (i + 1) + '</td>' +
         '<td>' + row.people + ' 人</td>' +
-        '<td>' + fmt(row.price) + '</td>' +
+        '<td>' + row.symbol + ' ' + fmt(row.priceOrig) + priceSub + '</td>' +
         '<td>' + row.nights + ' 晚</td>' +
-        '<td class="amt-twd">NT$ ' + fmt(row.twd) + '</td>' +
-        '<td class="amt-jpy">¥ ' + fmt(jpy) + '</td>' +
+        '<td class="amt-jpy">' + row.symbol + ' ' + fmt(row.origTotal) + '</td>' +
+        '<td class="amt-twd">NT$ ' + fmt(row.twdTotal) + '</td>' +
+        '<td class="note-cell' + (row.note ? '' : ' empty') + '">' + (row.note ? escHtml(row.note) : '—') + '</td>' +
         '<td><button type="button" class="del-btn" data-id="' + row.id + '">×</button></td>';
       tbody.appendChild(tr);
     }
 
-    var grandJPY = Math.round(grandTWD / exchRate);
     getEl('totalTWD').textContent = 'NT$ ' + fmt(grandTWD);
-    getEl('totalJPY').textContent = '¥ ' + fmt(grandJPY);
     getEl('tfoot').style.display = '';
     getEl('badge').textContent = rows.length + ' 筆';
   }
 
-  function addRow() {
-    var people = parseInt(getEl('fPeople').value, 10) || 1;
-    var price  = parseInt(getEl('fPrice').value,  10);
-    var nights = parseInt(getEl('fNights').value, 10) || 1;
+  // ── Escape HTML ──
+  function escHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
 
-    if (!price || price <= 0) {
-      var priceEl = getEl('fPrice');
-      priceEl.classList.add('error');
-      priceEl.focus();
-      setTimeout(function() { priceEl.classList.remove('error'); }, 1400);
+  // ── Forward mode ──
+  function addRow() {
+    var people    = parseInt(getEl('fPeople').value, 10) || 1;
+    var priceOrig = parseFloat(getEl('fPrice').value);
+    var nights    = parseInt(getEl('fNights').value, 10) || 1;
+    var note      = getEl('fNote').value.trim();
+
+    if (!priceOrig || priceOrig <= 0) {
+      var el = getEl('fPrice');
+      el.classList.add('error');
+      el.focus();
+      setTimeout(function() { el.classList.remove('error'); }, 1400);
       return;
     }
 
+    var rate = getRate();
+    var c    = getCurr();
+    var orig = people * priceOrig * nights;
     uid++;
-    rows.push({ id: uid, people: people, price: price, nights: nights,
-                twd: people * price * nights });
+    rows.push({
+      id: uid, people: people, priceOrig: priceOrig, nights: nights,
+      currency: c.code, symbol: c.symbol, rateAtEntry: rate,
+      origTotal: orig,
+      twdTotal:  Math.round(orig * rate),
+      note: note
+    });
     render();
     getEl('fPrice').value = '';
+    getEl('fNote').value  = '';
     getEl('fPrice').focus();
   }
 
+  // ── Delete row ──
   function deleteRow(id) {
     var tr = getEl('r' + id);
     if (!tr) return;
     tr.classList.remove('row-in');
     tr.classList.add('row-out');
     setTimeout(function() {
-      rows = rows.filter(function(row) { return row.id !== id; });
+      rows = rows.filter(function(r) { return r.id !== id; });
       render();
     }, 260);
   }
 
-  // Event listeners
-  getEl('addBtn').addEventListener('click', function() { addRow(); });
+  // ── Mode toggle ──
+  var revComputedPrice = 0;
 
-  getEl('rateInput').addEventListener('input', function() {
-    updateRateInfo();
+  function switchMode(mode) {
+    if (mode === 'fwd') {
+      getEl('modeFwd').style.display = '';
+      getEl('modeRev').style.display = 'none';
+      getEl('tabFwd').classList.add('active');
+      getEl('tabRev').classList.remove('active');
+    } else {
+      getEl('modeFwd').style.display = 'none';
+      getEl('modeRev').style.display = '';
+      getEl('tabFwd').classList.remove('active');
+      getEl('tabRev').classList.add('active');
+    }
+  }
+
+  // ── Reverse mode ──
+  function calcReverse() {
+    var total  = parseFloat(getEl('rTotal').value);
+    var people = parseInt(getEl('rPeople').value, 10) || 1;
+    var nights = parseInt(getEl('rNights').value, 10) || 1;
+
+    if (!total || total <= 0) {
+      var el = getEl('rTotal');
+      el.classList.add('error');
+      el.focus();
+      setTimeout(function() { el.classList.remove('error'); }, 1400);
+      getEl('revResult').classList.remove('show');
+      return;
+    }
+
+    var c = getCurr();
+    revComputedPrice = Math.round(total / people / nights);
+    getEl('revValue').textContent = c.symbol + ' ' + fmt(revComputedPrice);
+    getEl('revResult').classList.add('show');
+  }
+
+  function addRevRow() {
+    if (!revComputedPrice) return;
+    var people = parseInt(getEl('rPeople').value, 10) || 1;
+    var nights = parseInt(getEl('rNights').value, 10) || 1;
+    var note   = getEl('rNote').value.trim();
+    var rate   = getRate();
+    var c      = getCurr();
+    var orig   = people * revComputedPrice * nights;
+    uid++;
+    rows.push({
+      id: uid, people: people, priceOrig: revComputedPrice, nights: nights,
+      currency: c.code, symbol: c.symbol, rateAtEntry: rate,
+      origTotal: orig,
+      twdTotal:  Math.round(orig * rate),
+      note: note
+    });
     render();
+    getEl('rTotal').value = '';
+    getEl('rNote').value  = '';
+    getEl('revResult').classList.remove('show');
+    revComputedPrice = 0;
+  }
+
+  // ── Event listeners ──
+  getEl('addBtn').addEventListener('click', function() { addRow(); });
+  getEl('tabFwd').addEventListener('click', function() { switchMode('fwd'); });
+  getEl('tabRev').addEventListener('click', function() { switchMode('rev'); });
+  getEl('calcRevBtn').addEventListener('click', function() { calcReverse(); });
+  getEl('revAddBtn').addEventListener('click', function() { addRevRow(); });
+
+  getEl('saveBtn').addEventListener('click', function() { saveRows(); });
+
+  getEl('rateInput').addEventListener('input', function() { updateRateInfo(); });
+
+  getEl('currencyPills').addEventListener('click', function(e) {
+    var btn = e.target.closest('.currency-pill');
+    if (btn) selectCurrency(parseInt(btn.dataset.idx, 10));
   });
 
   getEl('tbody').addEventListener('click', function(e) {
@@ -526,8 +881,50 @@
     });
   });
 
-  // Init
+  ['rTotal', 'rPeople', 'rNights'].forEach(function(id) {
+    getEl(id).addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') calcReverse();
+    });
+  });
+
+  // ── Toast ──
+  function showToast(msg) {
+    var t = getEl('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(function() { t.classList.remove('show'); }, 2200);
+  }
+
+  // ── Save / Load ──
+  var STORAGE_KEY = 'travel-calc-rows';
+
+  function saveRows() {
+    if (rows.length === 0) { showToast('尚無資料可以儲存'); return; }
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ rows: rows, uid: uid }));
+      showToast('已儲存 ' + rows.length + ' 筆明細 ✓');
+    } catch(e) {
+      showToast('儲存失敗，請檢查瀏覽器設定');
+    }
+  }
+
+  function loadRows() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      var data = JSON.parse(raw);
+      if (data && Array.isArray(data.rows) && data.rows.length > 0) {
+        rows = data.rows;
+        uid  = data.uid || rows.length;
+        render();
+      }
+    } catch(e) { /* ignore */ }
+  }
+
+  // ── Init ──
+  buildPills();
   updateRateInfo();
+  loadRows();
   render();
 </script>
 </body>
