@@ -302,6 +302,27 @@
     }
     td.note-cell.empty { color: var(--border); }
 
+    td.note-cell {
+      cursor: text;
+    }
+    td.note-cell:hover {
+      background: var(--sakura-pale);
+    }
+    .note-input {
+      width: 100%;
+      min-width: 120px;
+      padding: .2rem .4rem;
+      border: 1px solid var(--sakura);
+      border-radius: 2px;
+      background: var(--paper);
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: .82rem;
+      color: var(--ink);
+      outline: none;
+      box-shadow: 0 0 0 3px var(--sakura-pale);
+    }
+
     /* per-person price sub-annotation */
     .price-sub {
       display: block;
@@ -653,8 +674,8 @@
 
 <script>
   var CURRENCIES = [
-    { code: 'TWD', flag: '🇹🇼', symbol: 'NT$',   name: '台幣', defaultRate: 1  },
     { code: 'JPY', flag: '🇯🇵', symbol: '¥',   name: '日圓', defaultRate: 0.2   },
+    { code: 'TWD', flag: '🇹🇼', symbol: 'NT$',   name: '台幣', defaultRate: 1  },
     { code: 'KRW', flag: '🇰🇷', symbol: '₩',   name: '韓元', defaultRate: 0.023 },
     { code: 'USD', flag: '🇺🇸', symbol: 'US$', name: '美元', defaultRate: 32.5  },
     { code: 'EUR', flag: '🇪🇺', symbol: '€',   name: '歐元', defaultRate: 35.5  },
@@ -734,7 +755,7 @@
         '<td>' + row.nights + ' 晚</td>' +
         '<td class="amt-jpy">' + row.symbol + ' ' + fmt(row.origTotal) + '</td>' +
         '<td class="amt-twd">NT$ ' + fmt(row.twdTotal) + '</td>' +
-        '<td class="note-cell' + (row.note ? '' : ' empty') + '">' + (row.note ? escHtml(row.note) : '—') + '</td>' +
+        '<td class="note-cell' + (row.note ? '' : ' empty') + '" data-id="' + row.id + '">' + (row.note ? escHtml(row.note) : '—') + '</td>' +
         '<td><button type="button" class="del-btn" data-id="' + row.id + '">×</button></td>';
       tbody.appendChild(tr);
     }
@@ -873,6 +894,34 @@
   getEl('tbody').addEventListener('click', function(e) {
     var btn = e.target.closest('.del-btn');
     if (btn) deleteRow(parseInt(btn.dataset.id, 10));
+
+    var noteCell = e.target.closest('.note-cell');
+    if (noteCell && !noteCell.querySelector('.note-input')) {
+      var rowId = parseInt(noteCell.dataset.id, 10);
+      var row   = rows.find(function(r) { return r.id === rowId; });
+      if (!row) return;
+      var input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'note-input';
+      input.maxLength = 60;
+      input.value = row.note || '';
+      noteCell.textContent = '';
+      noteCell.classList.remove('empty');
+      noteCell.appendChild(input);
+      input.focus();
+      input.select();
+
+      function commit() {
+        row.note = input.value.trim();
+        noteCell.textContent = row.note || '—';
+        noteCell.classList.toggle('empty', !row.note);
+      }
+      input.addEventListener('blur',  commit);
+      input.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter')  { input.blur(); }
+        if (e.key === 'Escape') { input.value = row.note || ''; input.blur(); }
+      });
+    }
   });
 
   ['fPeople', 'fPrice', 'fNights'].forEach(function(id) {
