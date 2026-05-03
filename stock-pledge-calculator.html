@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>股票質押計算機 — Yu-Jack's Tools</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;600;700&family=Noto+Sans+TC:wght@300;400;500&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:           #F5EFE6;
+      --bg-alt:       #EDE5D8;
+      --paper:        #FAF6F0;
+      --ink:          #2C2418;
+      --ink-light:    #6B5E4E;
+      --sakura:       #C47C8A;
+      --sakura-pale:  rgba(196,124,138,0.12);
+      --gold:         #B8956A;
+      --gold-pale:    rgba(184,149,106,0.15);
+      --indigo:       #3D4E6B;
+      --border:       #D4C9BA;
+      --border-light: #E8E0D4;
+
+      --safe:         #5A8A6A;
+      --safe-bg:      rgba(90,138,106,0.10);
+      --warn:         #C8973A;
+      --warn-bg:      rgba(200,151,58,0.12);
+      --danger:       #C4662A;
+      --danger-bg:    rgba(196,102,42,0.12);
+      --critical:     #B03030;
+      --critical-bg:  rgba(176,48,48,0.12);
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background-color: var(--bg);
+      background-image:
+        radial-gradient(ellipse at 15% 60%, rgba(196,124,138,.07) 0%, transparent 50%),
+        radial-gradient(ellipse at 85% 15%, rgba(184,149,106,.09) 0%, transparent 45%),
+        radial-gradient(ellipse at 50% 90%, rgba(61,78,107,.05) 0%, transparent 40%);
+      min-height: 100vh;
+      font-family: 'Noto Sans TC', sans-serif;
+      color: var(--ink);
+      padding: 2.5rem 1rem 6rem;
+    }
+
+    .container {
+      max-width: 820px;
+      margin: 0 auto;
+    }
+
+    /* ── Back link ── */
+    .back {
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: .8rem;
+      letter-spacing: .1em;
+      color: var(--ink-light);
+      text-decoration: none;
+      margin-bottom: 2rem;
+      opacity: .7;
+      transition: opacity .18s;
+    }
+    .back:hover { opacity: 1; }
+    .back::before { content: '←'; font-style: normal; }
+
+    /* ── Header ── */
+    .header {
+      text-align: center;
+      margin-bottom: 2.8rem;
+      animation: fadeDown .55s ease both;
+    }
+    .header .eyebrow {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: .8rem;
+      letter-spacing: .42em;
+      color: var(--sakura);
+      margin-bottom: .5rem;
+      text-transform: uppercase;
+    }
+    .header h1 {
+      font-family: 'Shippori Mincho', serif;
+      font-size: 2.2rem;
+      font-weight: 600;
+      letter-spacing: .16em;
+      color: var(--ink);
+    }
+    .header .sub {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: .88rem;
+      color: var(--ink-light);
+      margin-top: .4rem;
+      letter-spacing: .06em;
+    }
+    .header .rule {
+      width: 72px;
+      height: 1px;
+      background: linear-gradient(to right, transparent, var(--sakura), transparent);
+      margin: 1rem auto 0;
+    }
+
+    /* ── Card base ── */
+    .card {
+      background: var(--paper);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      box-shadow: 0 2px 16px rgba(44,36,24,.06);
+      padding: 1.8rem;
+      margin-bottom: 1.4rem;
+    }
+    .card-title {
+      font-family: 'Shippori Mincho', serif;
+      font-size: .78rem;
+      font-weight: 600;
+      letter-spacing: .28em;
+      color: var(--ink-light);
+      text-transform: uppercase;
+      margin-bottom: 1.2rem;
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+    }
+    .card-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border-light);
+    }
+
+    /* ── Input grid ── */
+    .input-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem 1.4rem;
+    }
+    @media (max-width: 520px) {
+      .input-grid { grid-template-columns: 1fr; }
+    }
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: .38rem;
+    }
+    .field label {
+      font-size: .72rem;
+      letter-spacing: .1em;
+      color: var(--ink-light);
+      font-weight: 500;
+    }
+    .field label span {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: .78rem;
+      color: var(--sakura);
+      margin-left: .3rem;
+      letter-spacing: .04em;
+    }
+    .field input {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: .55rem .75rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .95rem;
+      color: var(--ink);
+      outline: none;
+      transition: border-color .18s, box-shadow .18s;
+      -moz-appearance: textfield;
+    }
+    .field input::-webkit-inner-spin-button,
+    .field input::-webkit-outer-spin-button { -webkit-appearance: none; }
+    .field input:focus {
+      border-color: var(--sakura);
+      box-shadow: 0 0 0 3px var(--sakura-pale);
+    }
+    .field.full { grid-column: 1 / -1; }
+
+    /* ── Loan amount input with warning ── */
+    .field input.over-limit {
+      border-color: var(--critical);
+      box-shadow: 0 0 0 3px rgba(176,48,48,.12);
+    }
+    .warn-text {
+      font-size: .68rem;
+      color: var(--critical);
+      letter-spacing: .04em;
+      display: none;
+      margin-top: .1rem;
+    }
+    .warn-text.visible { display: block; }
+
+    /* ── Slider ── */
+    .slider-row {
+      display: flex;
+      align-items: center;
+      gap: .7rem;
+    }
+    .slider-row input[type="range"] {
+      flex: 1;
+      -webkit-appearance: none;
+      appearance: none;
+      height: 3px;
+      background: var(--border);
+      border-radius: 2px;
+      outline: none;
+      border: none;
+      box-shadow: none;
+      padding: 0;
+    }
+    .slider-row input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--sakura);
+      cursor: pointer;
+      border: 2px solid var(--paper);
+      box-shadow: 0 1px 4px rgba(196,124,138,.4);
+    }
+    .slider-row input[type="range"]:focus {
+      border: none;
+      box-shadow: none;
+    }
+    .slider-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .85rem;
+      color: var(--ink);
+      min-width: 36px;
+      text-align: right;
+    }
+
+    /* ── Two-column result sections ── */
+    .results-split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.2rem;
+      margin-bottom: 1.4rem;
+    }
+    @media (max-width: 560px) {
+      .results-split { grid-template-columns: 1fr; }
+    }
+
+    /* Section label tag */
+    .section-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      font-size: .64rem;
+      font-weight: 500;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      padding: .22rem .6rem;
+      border-radius: 2px;
+      margin-bottom: 1rem;
+    }
+    .tag-ref {
+      background: var(--gold-pale);
+      color: var(--gold);
+      border: 1px solid rgba(184,149,106,.25);
+    }
+    .tag-actual {
+      background: var(--sakura-pale);
+      color: var(--sakura);
+      border: 1px solid rgba(196,124,138,.25);
+    }
+
+    /* Metric rows */
+    .metric {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: .5rem 0;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .metric:last-child { border-bottom: none; }
+    .metric-label {
+      font-size: .75rem;
+      color: var(--ink-light);
+      letter-spacing: .04em;
+    }
+    .metric-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .95rem;
+      font-weight: 500;
+      color: var(--ink);
+      letter-spacing: .01em;
+    }
+    .metric-value.highlight {
+      font-size: 1.15rem;
+      color: var(--gold);
+    }
+    .metric-value.highlight-sakura {
+      font-size: 1.15rem;
+      color: var(--sakura);
+    }
+
+    /* ── Maintenance Rate indicator ── */
+    .ratio-block {
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px dashed var(--border);
+    }
+    .ratio-label {
+      font-size: .72rem;
+      letter-spacing: .1em;
+      color: var(--ink-light);
+      margin-bottom: .5rem;
+    }
+    .ratio-value {
+      font-family: 'Shippori Mincho', serif;
+      font-size: 2.2rem;
+      font-weight: 600;
+      letter-spacing: .04em;
+      line-height: 1;
+      transition: color .3s;
+    }
+    .ratio-status {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: .82rem;
+      margin-top: .25rem;
+      letter-spacing: .06em;
+      transition: color .3s;
+    }
+
+    .ratio-safe     { color: var(--safe); }
+    .ratio-warn     { color: var(--warn); }
+    .ratio-danger   { color: var(--danger); }
+    .ratio-critical { color: var(--critical); }
+
+    /* ── Risk bar ── */
+    .risk-bar-wrap {
+      margin-top: 1rem;
+      position: relative;
+    }
+    .risk-bar-track {
+      height: 6px;
+      border-radius: 3px;
+      background: linear-gradient(to right, var(--critical) 0%, var(--danger) 22%, var(--warn) 44%, var(--safe) 100%);
+      position: relative;
+      margin-bottom: .4rem;
+    }
+    .risk-bar-needle {
+      position: absolute;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--ink);
+      border: 2px solid var(--paper);
+      box-shadow: 0 1px 4px rgba(44,36,24,.3);
+      transition: left .4s cubic-bezier(.34,1.56,.64,1);
+    }
+    .risk-bar-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: .6rem;
+      color: var(--ink-light);
+      letter-spacing: .06em;
+    }
+
+    /* ── Threshold cards ── */
+    .threshold-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+    }
+    @media (max-width: 580px) {
+      .threshold-grid { grid-template-columns: 1fr; }
+    }
+
+    .threshold-card {
+      border-radius: 2px;
+      padding: 1.1rem 1rem;
+      border: 1px solid;
+    }
+    .threshold-card.t-warn {
+      background: var(--warn-bg);
+      border-color: rgba(200,151,58,.25);
+    }
+    .threshold-card.t-danger {
+      background: var(--danger-bg);
+      border-color: rgba(196,102,42,.25);
+    }
+    .threshold-card.t-critical {
+      background: var(--critical-bg);
+      border-color: rgba(176,48,48,.25);
+    }
+
+    .threshold-name {
+      font-size: .66rem;
+      font-weight: 500;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      margin-bottom: .15rem;
+    }
+    .threshold-ratio {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: .78rem;
+      margin-bottom: .6rem;
+      opacity: .75;
+    }
+    .t-warn  .threshold-name { color: var(--warn); }
+    .t-danger .threshold-name { color: var(--danger); }
+    .t-critical .threshold-name { color: var(--critical); }
+    .t-warn  .threshold-ratio { color: var(--warn); }
+    .t-danger .threshold-ratio { color: var(--danger); }
+    .t-critical .threshold-ratio { color: var(--critical); }
+
+    .threshold-price {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.3rem;
+      font-weight: 500;
+      color: var(--ink);
+      letter-spacing: .02em;
+    }
+    .threshold-drop {
+      font-size: .72rem;
+      color: var(--ink-light);
+      margin-top: .2rem;
+      letter-spacing: .04em;
+    }
+    .threshold-drop strong {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 500;
+    }
+
+    /* ── Placeholder state ── */
+    .placeholder {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: .88rem;
+      color: var(--border);
+      letter-spacing: .08em;
+    }
+
+    /* ── Animations ── */
+    @keyframes fadeDown {
+      from { opacity: 0; transform: translateY(-14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .card { animation: fadeUp .45s ease both; }
+    .card:nth-child(1) { animation-delay: .05s; }
+    .card:nth-child(2) { animation-delay: .12s; }
+    .card:nth-child(3) { animation-delay: .19s; }
+    .results-split > .card:nth-child(1) { animation-delay: .18s; }
+    .results-split > .card:nth-child(2) { animation-delay: .24s; }
+
+    /* ── Note ── */
+    .note {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: .75rem;
+      color: var(--ink-light);
+      letter-spacing: .06em;
+      text-align: center;
+      margin-top: 2rem;
+      opacity: .65;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <a class="back" href="index.html"> 返回工具集</a>
+
+    <header class="header">
+      <p class="eyebrow">Finance</p>
+      <h1>股票質押計算機</h1>
+      <p class="sub">Stock Pledge Loan Calculator</p>
+      <div class="rule"></div>
+    </header>
+
+    <!-- ── Inputs ── -->
+    <div class="card">
+      <div class="card-title">基本參數</div>
+      <div class="input-grid">
+
+        <div class="field">
+          <label>股票張數<span>1張 = 1,000股</span></label>
+          <input type="number" id="shares" placeholder="例：100" min="0" step="1">
+        </div>
+
+        <div class="field">
+          <label>目前股價<span>元 / 股</span></label>
+          <input type="number" id="price" placeholder="例：85.5" min="0" step="0.01">
+        </div>
+
+        <div class="field">
+          <label>貸款成數<span>%</span></label>
+          <div class="slider-row">
+            <input type="range" id="ltv-range" min="10" max="85" value="60" step="1">
+            <span class="slider-val" id="ltv-display">60%</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>年利率<span>%</span></label>
+          <input type="number" id="rate" placeholder="例：3.88" min="0" step="0.01">
+        </div>
+
+        <div class="field full">
+          <label>實際借貸金額<span>元（不可超過可貸款金額）</span></label>
+          <input type="number" id="actual-loan" placeholder="例：3,000,000" min="0" step="1">
+          <div class="warn-text" id="loan-warn">⚠ 實際借貸金額超過可貸款金額，請調低借貸金額</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── Reference & Actual ── -->
+    <div class="results-split">
+
+      <!-- 可貸款金額 -->
+      <div class="card">
+        <div class="card-title">可貸款金額</div>
+        <span class="section-tag tag-ref">參考上限</span>
+
+        <div class="metric">
+          <span class="metric-label">擔保品市值</span>
+          <span class="metric-value" id="collateral">—</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">貸款成數</span>
+          <span class="metric-value" id="ltv-pct">—</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">可貸款金額</span>
+          <span class="metric-value highlight" id="max-loan">—</span>
+        </div>
+      </div>
+
+      <!-- 實際借貸金額 -->
+      <div class="card">
+        <div class="card-title">實際借貸</div>
+        <span class="section-tag tag-actual">實際計算</span>
+
+        <div class="metric">
+          <span class="metric-label">實際借貸金額</span>
+          <span class="metric-value highlight-sakura" id="actual-display">—</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">月利息</span>
+          <span class="metric-value" id="monthly-interest">—</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">年利息</span>
+          <span class="metric-value" id="yearly-interest">—</span>
+        </div>
+
+        <div class="ratio-block">
+          <div class="ratio-label">目前維持率</div>
+          <div class="ratio-value placeholder" id="ratio-value">—</div>
+          <div class="ratio-status" id="ratio-status"></div>
+          <div class="risk-bar-wrap" id="risk-bar-wrap" style="display:none">
+            <div class="risk-bar-track">
+              <div class="risk-bar-needle" id="risk-needle"></div>
+            </div>
+            <div class="risk-bar-labels">
+              <span>斷頭 120%</span>
+              <span>追繳 130%</span>
+              <span>警戒 166%</span>
+              <span>安全</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── Thresholds ── -->
+    <div class="card">
+      <div class="card-title">警戒線分析</div>
+      <div class="threshold-grid">
+
+        <div class="threshold-card t-warn">
+          <div class="threshold-name">警戒線</div>
+          <div class="threshold-ratio">維持率 166%</div>
+          <div class="threshold-price" id="price-warn">—</div>
+          <div class="threshold-drop" id="drop-warn">需補繳差額</div>
+        </div>
+
+        <div class="threshold-card t-danger">
+          <div class="threshold-name">追繳線</div>
+          <div class="threshold-ratio">維持率 130%</div>
+          <div class="threshold-price" id="price-call">—</div>
+          <div class="threshold-drop" id="drop-call">強制補繳</div>
+        </div>
+
+        <div class="threshold-card t-critical">
+          <div class="threshold-name">斷頭線</div>
+          <div class="threshold-ratio">維持率 120%</div>
+          <div class="threshold-price" id="price-cut">—</div>
+          <div class="threshold-drop" id="drop-cut">強制平倉</div>
+        </div>
+
+      </div>
+    </div>
+
+    <p class="note">
+      本計算機僅供參考，實際貸款條件依各金融機構規定為準。<br>
+      警戒線 166%、追繳線 130%、斷頭線 120% 為一般常見標準，各券商可能有所不同。
+    </p>
+
+  </div>
+
+  <script>
+    const $ = id => document.getElementById(id);
+
+    const inputs = ['shares', 'price', 'actual-loan', 'rate'];
+    inputs.forEach(id => $(id).addEventListener('input', calculate));
+    $('ltv-range').addEventListener('input', () => {
+      $('ltv-display').textContent = $('ltv-range').value + '%';
+      calculate();
+    });
+
+    function fmt(n, decimals = 0) {
+      if (!isFinite(n)) return '—';
+      return n.toLocaleString('zh-TW', {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals
+      });
+    }
+
+    function calculate() {
+      const shares     = parseFloat($('shares').value) || 0;
+      const price      = parseFloat($('price').value) || 0;
+      const ltv        = parseFloat($('ltv-range').value) / 100;
+      const rate       = parseFloat($('rate').value) / 100;
+      const actualLoan = parseFloat($('actual-loan').value) || 0;
+
+      $('ltv-pct').textContent = (ltv * 100).toFixed(0) + '%';
+
+      if (shares <= 0 || price <= 0) {
+        resetOutputs();
+        return;
+      }
+
+      const totalShares  = shares * 1000;
+      const collateral   = totalShares * price;
+      const maxLoan      = collateral * ltv;
+
+      $('collateral').textContent = 'NT$ ' + fmt(collateral);
+      $('max-loan').textContent   = 'NT$ ' + fmt(maxLoan);
+
+      // Loan excess warning
+      const loanInput = $('actual-loan');
+      const warnEl    = $('loan-warn');
+      if (actualLoan > maxLoan && actualLoan > 0) {
+        loanInput.classList.add('over-limit');
+        warnEl.classList.add('visible');
+      } else {
+        loanInput.classList.remove('over-limit');
+        warnEl.classList.remove('visible');
+      }
+
+      if (actualLoan <= 0) {
+        $('actual-display').textContent     = '—';
+        $('monthly-interest').textContent   = '—';
+        $('yearly-interest').textContent    = '—';
+        $('ratio-value').textContent        = '—';
+        $('ratio-value').className          = 'ratio-value placeholder';
+        $('ratio-status').textContent       = '';
+        $('risk-bar-wrap').style.display    = 'none';
+        resetThresholds();
+        return;
+      }
+
+      // ── Actual loan metrics ──
+      $('actual-display').textContent = 'NT$ ' + fmt(actualLoan);
+
+      if (rate > 0) {
+        $('monthly-interest').textContent = 'NT$ ' + fmt(actualLoan * rate / 12, 0);
+        $('yearly-interest').textContent  = 'NT$ ' + fmt(actualLoan * rate, 0);
+      } else {
+        $('monthly-interest').textContent = '—';
+        $('yearly-interest').textContent  = '—';
+      }
+
+      // ── Maintenance ratio ──
+      const ratio = (collateral / actualLoan) * 100;
+      const ratioEl = $('ratio-value');
+      const statusEl = $('ratio-status');
+      ratioEl.textContent = fmt(ratio, 1) + '%';
+      ratioEl.classList.remove('placeholder');
+
+      let ratioClass, statusText;
+      if (ratio >= 166) {
+        ratioClass = 'ratio-safe';
+        statusText = '安全 — 擔保充足';
+      } else if (ratio >= 130) {
+        ratioClass = 'ratio-warn';
+        statusText = '警戒 — 接近警戒線，建議注意';
+      } else if (ratio >= 120) {
+        ratioClass = 'ratio-danger';
+        statusText = '危險 — 已進入追繳區間';
+      } else {
+        ratioClass = 'ratio-critical';
+        statusText = '斷頭 — 可能面臨強制平倉';
+      }
+      ratioEl.className  = 'ratio-value ' + ratioClass;
+      statusEl.className = 'ratio-status ' + ratioClass;
+      statusEl.textContent = statusText;
+
+      // Risk bar needle (map ratio: 100% → 0%, 250%+ → 100%)
+      const barPct = Math.min(Math.max((ratio - 100) / 150, 0), 1) * 100;
+      $('risk-bar-wrap').style.display = 'block';
+      $('risk-needle').style.left = barPct + '%';
+
+      // ── Thresholds ──
+      const warnPrice = (actualLoan * 1.66) / totalShares;
+      const callPrice = (actualLoan * 1.30) / totalShares;
+      const cutPrice  = (actualLoan * 1.20) / totalShares;
+
+      function dropText(triggerPrice, el) {
+        if (price > 0) {
+          const pct = ((price - triggerPrice) / price * 100);
+          if (pct > 0) {
+            el.innerHTML = `下跌 <strong>${fmt(pct, 1)}%</strong> 觸發`;
+          } else {
+            el.innerHTML = `<strong>已超過觸發價格</strong>`;
+          }
+        }
+      }
+
+      $('price-warn').textContent = 'NT$ ' + fmt(warnPrice, 2);
+      $('price-call').textContent = 'NT$ ' + fmt(callPrice, 2);
+      $('price-cut').textContent  = 'NT$ ' + fmt(cutPrice, 2);
+
+      dropText(warnPrice, $('drop-warn'));
+      dropText(callPrice, $('drop-call'));
+      dropText(cutPrice,  $('drop-cut'));
+    }
+
+    function resetOutputs() {
+      $('collateral').textContent   = '—';
+      $('ltv-pct').textContent      = (parseFloat($('ltv-range').value)) + '%';
+      $('max-loan').textContent     = '—';
+      $('actual-display').textContent   = '—';
+      $('monthly-interest').textContent = '—';
+      $('yearly-interest').textContent  = '—';
+      $('ratio-value').textContent  = '—';
+      $('ratio-value').className    = 'ratio-value placeholder';
+      $('ratio-status').textContent = '';
+      $('risk-bar-wrap').style.display = 'none';
+      resetThresholds();
+    }
+
+    function resetThresholds() {
+      ['price-warn','price-call','price-cut'].forEach(id => $(id).textContent = '—');
+      $('drop-warn').textContent = '需補繳差額';
+      $('drop-call').textContent = '強制補繳';
+      $('drop-cut').textContent  = '強制平倉';
+    }
+
+    calculate();
+  </script>
+</body>
+</html>
