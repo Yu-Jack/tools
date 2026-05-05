@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>退休收入計算機 — Yu-Jack's Tools</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;600;700&family=Noto+Sans+TC:wght@300;400;500&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:          #F5EFE6;
+      --bg-alt:      #EDE5D8;
+      --paper:       #FAF6F0;
+      --ink:         #2C2418;
+      --ink-light:   #6B5E4E;
+      --sakura:      #C47C8A;
+      --sakura-pale: rgba(196,124,138,0.12);
+      --gold:        #B8956A;
+      --indigo:      #3D4E6B;
+      --indigo-pale: rgba(61,78,107,0.10);
+      --border:      #D4C9BA;
+      --border-light:#E8E0D4;
+      --safe:        #4A7C59;
+      --safe-bg:     rgba(74,124,89,0.10);
+      --warn:        #8B4513;
+      --warn-bg:     rgba(139,69,19,0.09);
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background-color: var(--bg);
+      background-image:
+        radial-gradient(ellipse at 15% 60%, rgba(196,124,138,.08) 0%, transparent 55%),
+        radial-gradient(ellipse at 85% 15%, rgba(184,149,106,.10) 0%, transparent 48%),
+        radial-gradient(ellipse at 50% 90%, rgba(61,78,107,.06) 0%, transparent 45%);
+      min-height: 100vh;
+      font-family: 'Noto Sans TC', sans-serif;
+      color: var(--ink);
+      padding: 2.5rem 1rem 6rem;
+    }
+
+    .container { max-width: 1160px; margin: 0 auto; }
+
+    /* ── Back ── */
+    .back {
+      display: inline-flex; align-items: center; gap: .4rem;
+      font-family: 'Cormorant Garamond', serif; font-style: italic;
+      font-size: .82rem; letter-spacing: .12em;
+      color: var(--ink-light); text-decoration: none;
+      margin-bottom: 1.8rem; transition: color .18s;
+    }
+    .back:hover { color: var(--sakura); }
+
+    /* ── Header ── */
+    .header {
+      text-align: center; margin-bottom: 1.8rem;
+      animation: fadeDown .5s ease both;
+    }
+    .header .eyebrow {
+      font-family: 'Cormorant Garamond', serif; font-style: italic;
+      font-size: .82rem; letter-spacing: .38em; color: var(--sakura); margin-bottom: .4rem;
+    }
+    .header h1 {
+      font-family: 'Shippori Mincho', serif; font-size: 2.3rem;
+      font-weight: 600; letter-spacing: .12em; line-height: 1.15;
+    }
+    .header .sub {
+      font-family: 'Cormorant Garamond', serif; font-style: italic;
+      font-size: .88rem; color: var(--ink-light); margin-top: .3rem; letter-spacing: .06em;
+    }
+    .header .rule {
+      width: 72px; height: 1px;
+      background: linear-gradient(to right, transparent, var(--sakura), transparent);
+      margin: .85rem auto 0;
+    }
+
+    /* ── Currency bar ── */
+    .currency-bar {
+      display: flex; justify-content: center; gap: .5rem;
+      margin-bottom: 1.8rem; animation: fadeUp .45s .08s ease both;
+    }
+    .currency-btn {
+      padding: .4rem 1.35rem;
+      border: 1px solid var(--border); border-radius: 2px;
+      background: var(--paper); cursor: pointer;
+      font-family: 'Cormorant Garamond', serif; font-size: .95rem;
+      letter-spacing: .1em; color: var(--ink-light);
+      transition: all .18s ease;
+    }
+    .currency-btn:hover { border-color: var(--sakura); color: var(--sakura); }
+    .currency-btn.active {
+      background: var(--indigo); border-color: var(--indigo); color: #FAF6F0;
+    }
+
+    /* ── Main grid ── */
+    .main-grid {
+      display: grid; grid-template-columns: 420px 1fr; gap: 1.4rem;
+      animation: fadeUp .5s .12s ease both;
+    }
+    @media (max-width: 860px) { .main-grid { grid-template-columns: 1fr; } }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--paper); border: 1px solid var(--border);
+      border-radius: 3px; box-shadow: 0 2px 14px rgba(44,36,24,.07);
+      padding: 1.5rem 1.5rem;
+    }
+    .card + .card { margin-top: 1rem; }
+
+    .card-title {
+      font-family: 'Shippori Mincho', serif; font-size: .72rem; font-weight: 600;
+      letter-spacing: .24em; color: var(--ink-light); text-transform: uppercase;
+      margin-bottom: 1.15rem; padding-bottom: .55rem; border-bottom: 1px solid var(--border);
+    }
+
+    /* ── Sections ── */
+    .section { margin-bottom: 1.35rem; }
+    .section:last-child { margin-bottom: 0; }
+    .section-label {
+      font-family: 'Cormorant Garamond', serif; font-style: italic;
+      font-size: .8rem; letter-spacing: .16em; color: var(--gold); margin-bottom: .8rem;
+    }
+
+    /* ── Fields ── */
+    .field { margin-bottom: .85rem; }
+    .field:last-child { margin-bottom: 0; }
+
+    .field > label {
+      display: flex; justify-content: space-between; align-items: baseline;
+      font-size: .76rem; color: var(--ink-light); letter-spacing: .03em;
+      margin-bottom: .32rem;
+    }
+    .field > label .dsp {
+      font-family: 'Shippori Mincho', serif; font-size: .8rem;
+      color: var(--indigo); font-weight: 600;
+    }
+
+    /* age row */
+    .age-row { display: flex; gap: .55rem; align-items: center; }
+    .age-row input[type="range"] { flex: 1; }
+    .age-row input[type="number"] { width: 58px; text-align: center; flex-shrink: 0; }
+
+    /* slider */
+    input[type="range"] {
+      -webkit-appearance: none; width: 100%; height: 3px;
+      border-radius: 2px; background: var(--border); outline: none; cursor: pointer;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 13px; height: 13px; border-radius: 50%;
+      background: var(--indigo); cursor: pointer; transition: transform .15s;
+    }
+    input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.3); }
+    input[type="range"]::-moz-range-thumb {
+      width: 13px; height: 13px; border-radius: 50%;
+      background: var(--indigo); border: none; cursor: pointer;
+    }
+
+    /* number / text inputs */
+    input[type="number"], input[type="text"] {
+      width: 100%; padding: .42rem .65rem;
+      border: 1px solid var(--border); border-radius: 2px;
+      background: var(--bg-alt); font-family: 'Noto Sans TC', sans-serif;
+      font-size: .84rem; color: var(--ink); outline: none; transition: border-color .18s;
+    }
+    input[type="number"]:focus, input[type="text"]:focus { border-color: var(--indigo); }
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+    input[type="number"] { -moz-appearance: textfield; }
+
+    /* ── Results column ── */
+    .results-col { display: flex; flex-direction: column; gap: 1rem; }
+
+    /* ── Metric grid ── */
+    .metric-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .7rem; margin-bottom: .9rem; }
+
+    .metric {
+      background: var(--bg-alt); border: 1px solid var(--border);
+      border-radius: 2px; padding: .85rem 1rem;
+      transition: border-color .2s;
+    }
+    .metric.span2 { grid-column: 1 / -1; }
+    .metric.hero {
+      background: var(--indigo); border-color: var(--indigo); color: #FAF6F0;
+    }
+    .metric .lbl {
+      font-size: .66rem; letter-spacing: .1em; text-transform: uppercase;
+      color: var(--ink-light); margin-bottom: .3rem;
+    }
+    .metric.hero .lbl { color: rgba(250,246,240,.6); }
+    .metric .val {
+      font-family: 'Shippori Mincho', serif; font-size: 1.25rem;
+      font-weight: 700; color: var(--ink); line-height: 1.15;
+    }
+    .metric.hero .val { color: #FAF6F0; }
+    .metric .note { font-size: .66rem; color: var(--ink-light); margin-top: .18rem; }
+    .metric.hero .note { color: rgba(250,246,240,.55); }
+
+    /* status-colored metrics */
+    .metric.ok  { background: var(--safe-bg);  border-color: rgba(74,124,89,.3); }
+    .metric.ok  .val, .metric.ok  .lbl { color: var(--safe); }
+    .metric.bad { background: var(--warn-bg);  border-color: rgba(139,69,19,.28); }
+    .metric.bad .val, .metric.bad .lbl { color: var(--warn); }
+
+    /* ── Status banner ── */
+    .status {
+      padding: .7rem .95rem; border-radius: 2px;
+      font-size: .77rem; letter-spacing: .03em; line-height: 1.55;
+    }
+    .status.ok  { background: var(--safe-bg); border: 1px solid rgba(74,124,89,.28); color: var(--safe); }
+    .status.bad { background: var(--warn-bg); border: 1px solid rgba(139,69,19,.25); color: var(--warn); }
+
+    /* ── Progress ── */
+    .prog-header {
+      display: flex; justify-content: space-between;
+      font-size: .72rem; color: var(--ink-light); margin-bottom: .38rem; letter-spacing: .03em;
+    }
+    .prog-track {
+      height: 5px; background: var(--border); border-radius: 3px; overflow: hidden;
+    }
+    .prog-fill {
+      height: 100%; border-radius: 3px;
+      background: linear-gradient(to right, var(--indigo), var(--sakura));
+      transition: width .45s ease;
+    }
+
+    /* ── Chart ── */
+    .chart-legend {
+      display: flex; gap: 1.1rem; margin-top: .55rem;
+      font-size: .67rem; color: var(--ink-light); letter-spacing: .04em;
+    }
+    .chart-legend span { display: flex; align-items: center; gap: .3rem; }
+    .chart-legend i {
+      display: inline-block; width: 14px; height: 3px; border-radius: 2px;
+    }
+    .chart-legend .cl-i { background: var(--indigo); }
+    .chart-legend .dr-i { background: var(--sakura); }
+
+    svg.chart { width: 100%; height: 190px; display: block; overflow: visible; }
+
+    /* ── Detail table ── */
+    .table-section { margin-top: 1.4rem; animation: fadeUp .5s .3s ease both; }
+
+    .table-scroll {
+      max-height: 420px; overflow-y: auto;
+      border: 1px solid var(--border); border-radius: 2px;
+    }
+    .table-scroll::-webkit-scrollbar { width: 5px; }
+    .table-scroll::-webkit-scrollbar-track { background: transparent; }
+    .table-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    #detail-table { width: 100%; border-collapse: collapse; font-size: .79rem; }
+
+    #detail-table thead th {
+      position: sticky; top: 0; z-index: 1;
+      background: var(--bg-alt); border-bottom: 1px solid var(--border);
+      padding: .55rem .95rem; text-align: right;
+      font-family: 'Cormorant Garamond', serif; font-style: italic;
+      font-size: .76rem; letter-spacing: .1em; color: var(--ink-light);
+      white-space: nowrap;
+    }
+    #detail-table thead th:first-child,
+    #detail-table thead th:nth-child(2) { text-align: left; }
+
+    #detail-table tbody td {
+      padding: .38rem .95rem; border-bottom: 1px solid var(--border-light);
+      text-align: right; font-variant-numeric: tabular-nums;
+    }
+    #detail-table tbody td:first-child { text-align: left; color: var(--ink-light); min-width: 36px; }
+    #detail-table tbody td:nth-child(2) { text-align: left; color: var(--ink-light); white-space: nowrap; }
+
+    #detail-table tbody tr.accum:nth-child(even) { background: rgba(61,78,107,.03); }
+    #detail-table tbody tr.retire { }
+    #detail-table tbody tr.retire:nth-child(even) { background: rgba(196,124,138,.04); }
+
+    #detail-table tbody tr.phase-sep td {
+      text-align: center; padding: .45rem;
+      font-family: 'Cormorant Garamond', serif; font-style: italic;
+      font-size: .75rem; letter-spacing: .18em; color: var(--sakura);
+      background: rgba(196,124,138,.07); border-top: 1px solid rgba(196,124,138,.18);
+      border-bottom: 1px solid rgba(196,124,138,.18);
+    }
+    #detail-table tbody tr.depleted td { color: var(--warn); }
+    #detail-table .pos      { color: var(--safe); }
+    #detail-table .flow-out { color: var(--warn); }
+    #detail-table tbody tr.lump-row td {
+      background: rgba(184,149,106,.08);
+      border-top: 1px solid rgba(184,149,106,.25);
+      border-bottom: 1px solid rgba(184,149,106,.25);
+    }
+    #detail-table tbody tr.lump-row .lump-desc {
+      text-align: left; font-family: 'Cormorant Garamond', serif;
+      font-style: italic; letter-spacing: .06em; color: var(--gold);
+    }
+    #detail-table tbody tr.lump-row .lump-amt {
+      color: var(--warn); font-family: 'Shippori Mincho', serif; font-weight: 600;
+    }
+
+    /* ── Footer ── */
+    .footer {
+      text-align: center; margin-top: 3rem;
+      font-family: 'Cormorant Garamond', serif; font-style: italic;
+      font-size: .78rem; color: var(--border); letter-spacing: .12em;
+    }
+
+    /* ── Animations ── */
+    @keyframes fadeDown {
+      from { opacity: 0; transform: translateY(-14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <a class="back" href="index.html">← 回到工具集</a>
+
+  <header class="header">
+    <p class="eyebrow">Financial Planning</p>
+    <h1>退休收入計算機</h1>
+    <p class="sub">Retirement Income Calculator</p>
+    <div class="rule"></div>
+  </header>
+
+  <div class="currency-bar">
+    <button class="currency-btn active" data-cur="TWD">NT$ 台幣</button>
+    <button class="currency-btn"        data-cur="JPY">¥ 日圓</button>
+    <button class="currency-btn"        data-cur="USD">$ 美元</button>
+  </div>
+
+  <div class="main-grid">
+
+    <!-- ── LEFT: Inputs ── -->
+    <div class="inputs-col">
+      <div class="card">
+        <div class="card-title">輸入設定</div>
+
+        <!-- 個人資訊 -->
+        <div class="section">
+          <div class="section-label">個人資訊</div>
+
+          <div class="field">
+            <label>目前年齡 <span class="dsp" id="dsp-cur-age">35 歲</span></label>
+            <div class="age-row">
+              <input type="range" id="sl-cur-age" min="18" max="70" value="35">
+              <input type="number" id="nm-cur-age" min="18" max="70" value="35">
+            </div>
+          </div>
+
+          <div class="field">
+            <label>預計退休年齡 <span class="dsp" id="dsp-ret-age">60 歲</span></label>
+            <div class="age-row">
+              <input type="range" id="sl-ret-age" min="40" max="90" value="60">
+              <input type="number" id="nm-ret-age" min="40" max="90" value="60">
+            </div>
+          </div>
+
+          <div class="field">
+            <label>預計壽命上限 <span class="dsp" id="dsp-max-age">90 歲</span></label>
+            <div class="age-row">
+              <input type="range" id="sl-max-age" min="60" max="110" value="90">
+              <input type="number" id="nm-max-age" min="60" max="110" value="90">
+            </div>
+          </div>
+        </div>
+
+        <!-- 財務現況 -->
+        <div class="section">
+          <div class="section-label">目前財務狀況</div>
+
+          <div class="field">
+            <label>目前存款／投資總額</label>
+            <input type="number" id="cur-savings" value="3000000" min="0" placeholder="0">
+          </div>
+
+          <div class="field">
+            <label>每月儲蓄投入</label>
+            <input type="number" id="monthly-contrib" value="20000" min="0" placeholder="0">
+          </div>
+        </div>
+
+        <!-- 退休後收支 -->
+        <div class="section">
+          <div class="section-label">退休後收支（以今日幣值填寫）</div>
+
+          <div class="field">
+            <label>每年預計花費</label>
+            <input type="number" id="annual-exp" value="600000" min="0" placeholder="0">
+          </div>
+
+          <div class="field">
+            <label>退休時一次性大筆花費
+              <span style="font-size:.65rem;color:var(--gold);letter-spacing:.04em;">選填</span>
+            </label>
+            <input type="number" id="lump-sum" value="0" min="0" placeholder="0">
+          </div>
+
+          <div class="field">
+            <label>每月退休金／社保收入</label>
+            <input type="number" id="monthly-pension" value="15000" min="0" placeholder="0">
+          </div>
+        </div>
+
+        <!-- 假設 -->
+        <div class="section">
+          <div class="section-label">投資報酬率假設</div>
+
+          <div class="field">
+            <label>累積期年化報酬率 <span class="dsp" id="dsp-accum">6.0%</span></label>
+            <input type="range" id="sl-accum" min="0" max="15" step="0.5" value="6">
+          </div>
+
+          <div class="field">
+            <label>退休後年化報酬率 <span class="dsp" id="dsp-retire">4.0%</span></label>
+            <input type="range" id="sl-retire" min="0" max="10" step="0.5" value="4">
+          </div>
+
+          <div class="field">
+            <label>年通膨率 <span class="dsp" id="dsp-inf">2.0%</span></label>
+            <input type="range" id="sl-inf" min="0" max="8" step="0.25" value="2">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── RIGHT: Results ── -->
+    <div class="results-col">
+
+      <!-- Summary metrics -->
+      <div class="card">
+        <div class="card-title">退休規劃摘要</div>
+
+        <div class="metric-grid">
+          <div class="metric">
+            <div class="lbl">距退休還有</div>
+            <div class="val" id="r-years-to-retire">— 年</div>
+          </div>
+          <div class="metric hero">
+            <div class="lbl">退休時預計資產</div>
+            <div class="val" id="r-portfolio">—</div>
+            <div class="note" id="r-portfolio-note">含複利滾存</div>
+          </div>
+
+          <div class="metric">
+            <div class="lbl">每月花費需求（通膨調整後）</div>
+            <div class="val" id="r-monthly-need">—</div>
+            <div class="note" id="r-monthly-need-note">以退休時幣值計算</div>
+          </div>
+          <div class="metric">
+            <div class="lbl">每月退休金／社保</div>
+            <div class="val" id="r-pension">—</div>
+            <div class="note">估計值，已計入花費缺口</div>
+          </div>
+
+          <div class="metric">
+            <div class="lbl">每月需從資產提領</div>
+            <div class="val" id="r-withdrawal">—</div>
+            <div class="note">花費 − 退休金</div>
+          </div>
+          <div class="metric" id="r-years-card">
+            <div class="lbl">資金可使用年數</div>
+            <div class="val" id="r-years-last">—</div>
+            <div class="note" id="r-years-note"></div>
+          </div>
+        </div>
+
+        <div class="status" id="r-status">…</div>
+      </div>
+
+      <!-- Progress -->
+      <div class="card">
+        <div class="card-title">退休目標進度</div>
+
+        <div class="metric-grid" style="margin-bottom:.85rem;">
+          <div class="metric">
+            <div class="lbl">所需退休資產目標（25倍法則）</div>
+            <div class="val" id="r-target">—</div>
+            <div class="note">年提領額 × 25（4% 法則）</div>
+          </div>
+          <div class="metric">
+            <div class="lbl">目前存款占目標比例</div>
+            <div class="val" id="r-cur-pct">—</div>
+            <div class="note">未來值見進度條</div>
+          </div>
+        </div>
+
+        <div class="prog-header">
+          <span>目前存款</span>
+          <span id="r-prog-label">預計退休資產 <strong id="r-prog-pct">0%</strong> 達標</span>
+        </div>
+        <div class="prog-track">
+          <div class="prog-fill" id="r-prog-fill" style="width:0%"></div>
+        </div>
+      </div>
+
+      <!-- Chart -->
+      <div class="card">
+        <div class="card-title">資產走勢預測圖</div>
+        <svg class="chart" id="chart" viewBox="0 0 620 190" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="gradAccum" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#3D4E6B" stop-opacity=".42"/>
+              <stop offset="100%" stop-color="#3D4E6B" stop-opacity=".04"/>
+            </linearGradient>
+            <linearGradient id="gradDraw" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#C47C8A" stop-opacity=".42"/>
+              <stop offset="100%" stop-color="#C47C8A" stop-opacity=".04"/>
+            </linearGradient>
+          </defs>
+        </svg>
+        <div class="chart-legend">
+          <span><i class="cl-i"></i>累積期（持續存入）</span>
+          <span><i class="dr-i"></i>退休後提領</span>
+        </div>
+      </div>
+
+    </div><!-- /results-col -->
+  </div><!-- /main-grid -->
+
+  <!-- ── Year-by-year detail table ── -->
+  <div class="card table-section">
+    <div class="card-title">年度資產明細</div>
+    <div class="table-scroll">
+      <table id="detail-table">
+        <thead>
+          <tr>
+            <th>年</th>
+            <th>年齡</th>
+            <th>本金</th>
+            <th>年度花費</th>
+            <th>年度收益</th>
+            <th>年末資產</th>
+          </tr>
+        </thead>
+        <tbody id="detail-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <footer class="footer">— 本計算機僅供參考，實際結果將受市場波動影響 —</footer>
+</div>
+
+<script>
+  // ─── Config ───────────────────────────────────────────────────────────────
+  const CURRENCIES = {
+    TWD: { sym: 'NT$', locale: 'zh-TW', unit: [10000, '萬', 100000000, '億'] },
+    JPY: { sym: '¥',   locale: 'ja-JP', unit: [10000, '万', 100000000, '億'] },
+    USD: { sym: '$',   locale: 'en-US', unit: [1000,  'K',  1000000,    'M'] },
+  }
+  let cur = 'TWD'
+
+  // ─── DOM ──────────────────────────────────────────────────────────────────
+  const $ = id => document.getElementById(id)
+
+  // ─── Format helpers ───────────────────────────────────────────────────────
+  function fmt(n) {
+    if (!isFinite(n) || isNaN(n)) return '—'
+    const { sym, locale } = CURRENCIES[cur]
+    return sym + Math.round(n).toLocaleString(locale)
+  }
+
+  function fmtShort(n) {
+    const { sym, unit } = CURRENCIES[cur]
+    if (n >= unit[2]) return sym + (n / unit[2]).toFixed(1) + unit[3]
+    if (n >= unit[0]) return sym + (n / unit[0]).toFixed(0) + unit[1]
+    return sym + Math.round(n).toLocaleString()
+  }
+
+  // ─── Slider ↔ number syncing ──────────────────────────────────────────────
+  function bindAge(slId, nmId, dspId, suffix) {
+    const sl = $(slId), nm = $(nmId), dsp = $(dspId)
+    const sync = (v) => { sl.value = v; nm.value = v; dsp.textContent = v + suffix; calc() }
+    sl.addEventListener('input', () => sync(sl.value))
+    nm.addEventListener('input', () => sync(nm.value))
+  }
+  bindAge('sl-cur-age', 'nm-cur-age', 'dsp-cur-age', ' 歲')
+  bindAge('sl-ret-age', 'nm-ret-age', 'dsp-ret-age', ' 歲')
+  bindAge('sl-max-age', 'nm-max-age', 'dsp-max-age', ' 歲')
+
+  function bindSlider(slId, dspId, dp = 1) {
+    const sl = $(slId), dsp = $(dspId)
+    sl.addEventListener('input', () => {
+      dsp.textContent = parseFloat(sl.value).toFixed(dp) + '%'
+      calc()
+    })
+  }
+  bindSlider('sl-accum', 'dsp-accum')
+  bindSlider('sl-retire','dsp-retire')
+  bindSlider('sl-inf',   'dsp-inf')
+
+  ;['cur-savings','monthly-contrib','annual-exp','monthly-pension','lump-sum'].forEach(id => {
+    $(id).addEventListener('input', calc)
+  })
+
+  // ─── Currency buttons ─────────────────────────────────────────────────────
+  document.querySelectorAll('.currency-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.currency-btn').forEach(b => b.classList.remove('active'))
+      btn.classList.add('active')
+      cur = btn.dataset.cur
+      calc()
+    })
+  })
+
+  // ─── Year-by-year detail table ────────────────────────────────────────────
+  function buildTable({ curAge, retAge, maxAge, curSavings, mContrib, rAccum, rRetire, rInfl, lumpSum, annualExp, annWithdraw, portfolio }) {
+    const annualContrib = mContrib * 12
+    const accumYrs  = Math.max(0, retAge - curAge)
+    const retireYrs = Math.max(0, maxAge - retAge)
+    const rows = []
+
+    // Accumulation phase
+    // 本金 = prev year-end + annual contributions; 收益 = 本金 × rAccum
+    // 年度花費 = annualExp inflated to that year (informational, doesn't reduce portfolio)
+    let bal = curSavings
+    for (let y = 1; y <= accumYrs; y++) {
+      const expense   = annualExp * Math.pow(1 + rInfl, y)  // inflation-adjusted living expense
+      const principal = bal + annualContrib
+      const returns   = principal * rAccum
+      const end       = principal + returns
+      rows.push({ y, age: curAge + y, principal, expense, returns, end, phase: 'accum' })
+      bal = end
+    }
+
+    // Retirement phase — withdrawal grows with inflation each year
+    // 本金 = prev year-end − that year's withdrawal; 收益 = 本金 × rRetire
+    bal = portfolio
+    let w = annWithdraw
+    for (let y = 1; y <= retireYrs; y++) {
+      const depleted  = bal <= w
+      const principal = Math.max(0, bal - w)
+      const returns   = principal * rRetire
+      const end       = principal + returns
+      rows.push({ y, age: retAge + y, principal, returns, end, withdraw: w, phase: 'retire', depleted })
+      bal = depleted ? 0 : end
+      if (depleted) break
+      w *= (1 + rInfl)
+    }
+
+    let html = ''
+    let prevPhase = null
+    for (const r of rows) {
+      if (r.phase !== prevPhase) {
+        if (r.phase === 'retire') {
+          const label = annWithdraw > 0
+            ? `退休後　初年提領 ${fmt(annWithdraw)}（每年依通膨調升）`
+            : `退休後　（退休金已全額覆蓋花費）`
+          html += `<tr class="phase-sep"><td colspan="6">${label}</td></tr>`
+          if (lumpSum > 0) {
+            html += `<tr class="lump-row">
+              <td>—</td>
+              <td>${retAge} 歲</td>
+              <td class="lump-desc" colspan="3">一次性大筆花費</td>
+              <td class="lump-amt">−${fmt(lumpSum)}</td>
+            </tr>`
+          }
+        }
+        prevPhase = r.phase
+      }
+      const dep = r.depleted ? ' depleted' : ''
+      const flowCell = r.phase === 'accum'
+        ? `<td style="color:var(--border)">—</td>`
+        : `<td class="flow-out">−${fmt(r.withdraw)}</td>`
+      html += `<tr class="${r.phase}${dep}">
+        <td>${r.y}</td>
+        <td>${r.age} 歲</td>
+        <td>${r.principal > 0 ? fmt(r.principal) : '—'}</td>
+        ${flowCell}
+        <td class="pos">+${fmt(r.returns)}</td>
+        <td>${r.end > 0 ? fmt(r.end) : '資金耗盡'}</td>
+      </tr>`
+    }
+    $('detail-tbody').innerHTML = html
+  }
+
+  // ─── Core calculation ─────────────────────────────────────────────────────
+  function calc() {
+    const curAge      = parseInt($('sl-cur-age').value)  || 35
+    const retAge      = parseInt($('sl-ret-age').value)  || 60
+    const maxAge      = Math.max(parseInt($('sl-max-age').value) || 90, retAge + 1)
+    const curSavings  = parseFloat($('cur-savings').value)      || 0
+    const mContrib    = parseFloat($('monthly-contrib').value)  || 0
+    const annualExp   = parseFloat($('annual-exp').value)       || 0
+    const mPension    = parseFloat($('monthly-pension').value)  || 0
+    const lumpSum     = parseFloat($('lump-sum').value)         || 0
+    const rAccum      = parseFloat($('sl-accum').value)  / 100
+    const rRetire     = parseFloat($('sl-retire').value) / 100
+    const rInfl       = parseFloat($('sl-inf').value)    / 100
+
+    const yrs = Math.max(0, retAge - curAge)
+
+    // ── Portfolio at retirement ──────────────────────────────────────────────
+    const r_m  = rAccum / 12
+    const n_m  = yrs * 12
+    const fvS  = curSavings * Math.pow(1 + rAccum, yrs)
+    const fvC  = r_m > 0
+                 ? mContrib * (Math.pow(1 + r_m, n_m) - 1) / r_m
+                 : mContrib * n_m
+    const portfolio    = fvS + fvC
+    const netPortfolio = Math.max(0, portfolio - lumpSum)  // after one-time expense
+
+    // ── Inflation-adjusted expenses & pension at retirement ──────────────────
+    const inflFactor  = Math.pow(1 + rInfl, yrs)
+    const expAtRetire = annualExp   * inflFactor       // annual
+    const penAtRetire = mPension    * inflFactor       // monthly (inflated)
+    const mNeed       = expAtRetire / 12               // monthly need
+
+    // Annual withdrawal from portfolio = expenses − pension (floored at 0)
+    const annWithdraw  = Math.max(0, expAtRetire - penAtRetire * 12)
+    const mWithdraw    = annWithdraw / 12
+
+    // ── Years money lasts (growing annuity: withdrawal grows with inflation) ──
+    // Formula: n = -ln(1 - P*(r-g)/W) / ln((1+r)/(1+g))
+    // where r = rRetire, g = rInfl, P = netPortfolio, W = annWithdraw
+    let yrsLast
+    if (annWithdraw <= 0) {
+      yrsLast = Infinity
+    } else if (Math.abs(rRetire - rInfl) < 1e-9) {
+      yrsLast = netPortfolio / annWithdraw
+    } else {
+      const ratio = netPortfolio * (rRetire - rInfl) / annWithdraw
+      if (ratio >= 1) {
+        yrsLast = Infinity
+      } else {
+        yrsLast = -Math.log(1 - ratio) / Math.log((1 + rRetire) / (1 + rInfl))
+      }
+    }
+
+    // ── Target (25× rule, based on inflation-adjusted withdrawal) ────────────
+    const target = annWithdraw * 25
+
+    // Progress — based on net portfolio vs target
+    const progPct = target > 0 ? Math.min(100, netPortfolio / target * 100) : 100
+    const curPct  = target > 0 ? Math.min(100, curSavings   / target * 100) : 100
+
+    // ── Update DOM ───────────────────────────────────────────────────────────
+    $('r-years-to-retire').textContent = yrs + ' 年'
+    $('r-portfolio').textContent       = lumpSum > 0 ? fmt(netPortfolio) : fmt(portfolio)
+    $('r-portfolio-note').textContent  = lumpSum > 0
+      ? `扣除一次性花費 ${fmt(lumpSum)} 後`
+      : '含複利滾存'
+    $('r-monthly-need').textContent    = fmt(mNeed)
+    $('r-pension').textContent         = fmt(penAtRetire)
+    $('r-withdrawal').textContent      = fmt(mWithdraw)
+
+    const retireYrs   = maxAge - retAge   // years of retirement needed
+    const sustainable = yrsLast >= retireYrs || yrsLast === Infinity
+    const depletedAge = yrsLast === Infinity ? null : retAge + Math.round(yrsLast)
+
+    $('r-years-last').textContent = yrsLast === Infinity ? '永久 ∞' : Math.round(yrsLast) + ' 年'
+    $('r-years-note').textContent = yrsLast === Infinity
+      ? '資產永不耗盡'
+      : depletedAge <= maxAge
+        ? `${depletedAge} 歲耗盡，不足 ${maxAge} 歲`
+        : `可撐至 ${depletedAge} 歲`
+
+    const yrsCard = $('r-years-card')
+    yrsCard.className = 'metric ' + (sustainable ? 'ok' : 'bad')
+
+    // Status
+    const statusEl = $('r-status')
+    if (yrsLast === Infinity) {
+      statusEl.className = 'status ok'
+      statusEl.innerHTML = `✓ 資產足以永久支應花費，遠超過預計壽命 ${maxAge} 歲，退休規劃相當穩健。`
+    } else if (sustainable) {
+      statusEl.className = 'status ok'
+      statusEl.innerHTML = `✓ 資金可使用 <strong>${Math.round(yrsLast)} 年</strong>（至 ${depletedAge} 歲），超過預計壽命上限 ${maxAge} 歲，規劃足夠。`
+    } else if (depletedAge >= maxAge - 5) {
+      statusEl.className = 'status bad'
+      statusEl.innerHTML = `⚠ 資金預計 <strong>${depletedAge} 歲</strong>耗盡，距壽命上限 ${maxAge} 歲僅剩 ${maxAge - depletedAge} 年，建議增加儲蓄或調降花費。`
+    } else {
+      statusEl.className = 'status bad'
+      statusEl.innerHTML = `✗ 資金預計 <strong>${depletedAge} 歲</strong>耗盡，尚有 ${maxAge - depletedAge} 年資金缺口約 <strong>${fmt(target - portfolio)}</strong>，需大幅調整計畫。`
+    }
+
+    // Target / progress
+    $('r-target').textContent   = target > 0 ? fmt(target) : '不需提領'
+    $('r-cur-pct').textContent  = target > 0 ? Math.round(curPct) + '%' : '100%'
+    $('r-prog-pct').textContent = Math.round(progPct) + '%'
+    $('r-prog-fill').style.width = Math.min(100, progPct) + '%'
+
+    // Chart
+    drawChart({ curAge, retAge, maxAge, curSavings, mContrib, rAccum, rRetire, rInfl, annWithdraw, portfolio: netPortfolio })
+
+    // Table
+    buildTable({ curAge, retAge, maxAge, curSavings, mContrib, rAccum, rRetire, rInfl, lumpSum, annualExp, annWithdraw, portfolio: netPortfolio })
+  }
+
+  // ─── Chart ────────────────────────────────────────────────────────────────
+  function drawChart({ curAge, retAge, maxAge, curSavings, mContrib, rAccum, rRetire, rInfl, annWithdraw, portfolio }) {
+    const W = 620, H = 190
+    const pL = 52, pR = 12, pT = 14, pB = 26
+    const r_m = rAccum / 12
+    const yrs = Math.max(0, retAge - curAge)
+    const maxDrawYrs = Math.max(maxAge - retAge, 1)
+
+    // Accumulation data
+    const accumPts = []
+    for (let y = 0; y <= yrs; y++) {
+      const fvS = curSavings * Math.pow(1 + rAccum, y)
+      const fvC = r_m > 0
+        ? mContrib * (Math.pow(1 + r_m, y * 12) - 1) / r_m
+        : mContrib * y * 12
+      accumPts.push({ age: curAge + y, v: fvS + fvC })
+    }
+
+    // Drawdown data — capped at maxAge; withdrawal grows with inflation each year
+    const drawPts = [{ age: retAge, v: portfolio }]
+    let p = portfolio
+    let w = annWithdraw
+    for (let y = 1; y <= maxDrawYrs; y++) {
+      p = p * (1 + rRetire) - w
+      if (p <= 0) { drawPts.push({ age: retAge + y, v: 0 }); break }
+      drawPts.push({ age: retAge + y, v: p })
+      w *= (1 + rInfl)
+    }
+
+    const allPts   = [...accumPts, ...drawPts.slice(1)]
+    const maxV     = Math.max(...allPts.map(d => d.v), 1)
+    const minAge   = curAge
+    const endAge   = Math.max(allPts[allPts.length - 1].age, maxAge)
+    const ageSpan  = Math.max(endAge - minAge, 1)
+
+    const xp = age => pL + (age - minAge) / ageSpan * (W - pL - pR)
+    const yp = v   => pT + (1 - Math.max(0, v) / maxV) * (H - pT - pB)
+    const baseY = yp(0)
+    const retX  = xp(retAge)
+
+    const area = (pts, close) => {
+      if (pts.length < 2) return ''
+      let d = `M${xp(pts[0].age)},${yp(pts[0].v)}`
+      for (let i = 1; i < pts.length; i++) d += ` L${xp(pts[i].age)},${yp(pts[i].v)}`
+      if (close) d += ` L${xp(pts[pts.length-1].age)},${baseY} L${xp(pts[0].age)},${baseY} Z`
+      return d
+    }
+
+    // Y-axis ticks
+    const ticks = [0, 0.5, 1].map(f => {
+      const v = maxV * f
+      const y = yp(v)
+      return `<line x1="${pL}" y1="${y}" x2="${W-pR}" y2="${y}" stroke="#D4C9BA" stroke-width="0.5" stroke-dasharray="${f===0?'none':'4,3'}"/>
+              <text x="${pL-4}" y="${y}" text-anchor="end" dominant-baseline="middle"
+                font-family="'Noto Sans TC',sans-serif" font-size="8" fill="#6B5E4E">${fmtShort(v)}</text>`
+    }).join('')
+
+    // X-axis labels
+    const labelAges = [...new Set([curAge, retAge, maxAge])]
+    const xLabels = labelAges.map(age =>
+      `<text x="${xp(age)}" y="${H-6}" text-anchor="middle"
+        font-family="'Noto Sans TC',sans-serif" font-size="9" fill="#6B5E4E">${age}歲</text>`
+    ).join('')
+
+    // Max-age marker line
+    const maxX = xp(maxAge)
+    const maxAgeMarker = `
+      <line x1="${maxX}" y1="${pT}" x2="${maxX}" y2="${baseY}"
+        stroke="#C47C8A" stroke-width="1" stroke-dasharray="2,3" opacity=".7"/>
+      <text x="${maxX}" y="${pT-3}" text-anchor="middle"
+        font-family="'Cormorant Garamond',serif" font-style="italic"
+        font-size="9" fill="#C47C8A">壽命上限</text>`
+
+    const svg = $('chart')
+    svg.innerHTML = `
+      <defs>
+        <linearGradient id="gradAccum" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#3D4E6B" stop-opacity=".42"/>
+          <stop offset="100%" stop-color="#3D4E6B" stop-opacity=".04"/>
+        </linearGradient>
+        <linearGradient id="gradDraw" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#C47C8A" stop-opacity=".42"/>
+          <stop offset="100%" stop-color="#C47C8A" stop-opacity=".04"/>
+        </linearGradient>
+      </defs>
+
+      ${ticks}
+      ${xLabels}
+
+      ${maxAgeMarker}
+
+      <!-- Retirement divider -->
+      <line x1="${retX}" y1="${pT}" x2="${retX}" y2="${baseY}"
+        stroke="#B8956A" stroke-width="1.2" stroke-dasharray="4,3"/>
+      <text x="${retX}" y="${pT-3}" text-anchor="middle"
+        font-family="'Cormorant Garamond',serif" font-style="italic"
+        font-size="9" fill="#B8956A">退休</text>
+
+      <!-- Accumulation -->
+      <path d="${area(accumPts, true)}" fill="url(#gradAccum)"/>
+      <path d="${area(accumPts, false)}" fill="none" stroke="#3D4E6B" stroke-width="1.8" stroke-linejoin="round"/>
+
+      <!-- Drawdown -->
+      <path d="${area(drawPts, true)}" fill="url(#gradDraw)"/>
+      <path d="${area(drawPts, false)}" fill="none" stroke="#C47C8A" stroke-width="1.8" stroke-linejoin="round"/>
+
+      <!-- Peak dot -->
+      <circle cx="${xp(retAge)}" cy="${yp(portfolio)}" r="3.5"
+        fill="#FAF6F0" stroke="#3D4E6B" stroke-width="1.8"/>
+    `
+  }
+
+  // ─── Init ─────────────────────────────────────────────────────────────────
+  calc()
+</script>
+</body>
+</html>
