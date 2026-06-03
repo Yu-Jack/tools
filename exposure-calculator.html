@@ -1,0 +1,1754 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>曝險計算機 — Yu-Jack's Tools</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;600;700&family=Noto+Sans+TC:wght@300;400;500&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:           #F5EFE6;
+      --bg-alt:       #EDE5D8;
+      --paper:        #FAF6F0;
+      --ink:          #2C2418;
+      --ink-light:    #6B5E4E;
+      --sakura:       #C47C8A;
+      --sakura-pale:  rgba(196,124,138,0.12);
+      --gold:         #B8956A;
+      --gold-pale:    rgba(184,149,106,0.15);
+      --indigo:       #3D4E6B;
+      --indigo-pale:  rgba(61,78,107,0.12);
+      --border:       #D4C9BA;
+      --border-light: #E8E0D4;
+
+      --safe:         #5A8A6A;
+      --safe-bg:      rgba(90,138,106,0.10);
+      --warn:         #C8973A;
+      --warn-bg:      rgba(200,151,58,0.12);
+      --danger:       #C4662A;
+      --danger-bg:    rgba(196,102,42,0.12);
+      --critical:     #B03030;
+      --critical-bg:  rgba(176,48,48,0.12);
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background-color: var(--bg);
+      background-image:
+        radial-gradient(ellipse at 15% 60%, rgba(196,124,138,.07) 0%, transparent 50%),
+        radial-gradient(ellipse at 85% 15%, rgba(184,149,106,.09) 0%, transparent 45%),
+        radial-gradient(ellipse at 50% 90%, rgba(61,78,107,.05) 0%, transparent 40%);
+      min-height: 100vh;
+      font-family: 'Noto Sans TC', sans-serif;
+      color: var(--ink);
+      padding: 2.5rem 1rem 6rem;
+    }
+
+    .container { max-width: 900px; margin: 0 auto; }
+
+    /* ── Back link ── */
+    .back {
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: .8rem;
+      letter-spacing: .1em;
+      color: var(--ink-light);
+      text-decoration: none;
+      margin-bottom: 2rem;
+      opacity: .7;
+      transition: opacity .18s;
+    }
+    .back:hover { opacity: 1; }
+    .back::before { content: '←'; font-style: normal; }
+
+    /* ── Header ── */
+    .header {
+      text-align: center;
+      margin-bottom: 2.8rem;
+      animation: fadeDown .55s ease both;
+    }
+    .header .eyebrow {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: .8rem;
+      letter-spacing: .42em;
+      color: var(--sakura);
+      margin-bottom: .5rem;
+      text-transform: uppercase;
+    }
+    .header h1 {
+      font-family: 'Shippori Mincho', serif;
+      font-size: 2.2rem;
+      font-weight: 600;
+      letter-spacing: .16em;
+      color: var(--ink);
+    }
+    .header .sub {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: .88rem;
+      color: var(--ink-light);
+      margin-top: .4rem;
+      letter-spacing: .06em;
+    }
+    .header .rule {
+      width: 72px;
+      height: 1px;
+      background: linear-gradient(to right, transparent, var(--sakura), transparent);
+      margin: 1rem auto 0;
+    }
+
+    /* ── Card ── */
+    .card {
+      background: var(--paper);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      box-shadow: 0 2px 16px rgba(44,36,24,.06);
+      padding: 1.8rem;
+      margin-bottom: 1.4rem;
+      animation: fadeUp .45s ease both;
+    }
+
+    .card-title {
+      font-family: 'Shippori Mincho', serif;
+      font-size: .78rem;
+      font-weight: 600;
+      letter-spacing: .28em;
+      color: var(--ink-light);
+      text-transform: uppercase;
+      margin-bottom: 1.2rem;
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+    }
+    .card-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border-light);
+    }
+
+    /* ── Explanation card ── */
+    .explain-toggle {
+      width: 100%;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      text-align: left;
+    }
+    .explain-toggle .toggle-label {
+      font-family: 'Shippori Mincho', serif;
+      font-size: .78rem;
+      font-weight: 600;
+      letter-spacing: .28em;
+      color: var(--ink-light);
+      text-transform: uppercase;
+    }
+    .toggle-arrow {
+      font-size: .7rem;
+      color: var(--sakura);
+      transition: transform .25s ease;
+      flex-shrink: 0;
+    }
+    .explain-body {
+      overflow: hidden;
+      max-height: 0;
+      transition: max-height .4s ease, opacity .3s ease;
+      opacity: 0;
+    }
+    .explain-body.open {
+      max-height: 800px;
+      opacity: 1;
+    }
+    .explain-rule {
+      height: 1px;
+      background: var(--border-light);
+      margin: 1rem 0 1.4rem;
+    }
+
+    .explain-def {
+      font-size: .82rem;
+      line-height: 1.8;
+      color: var(--ink);
+      margin-bottom: 1.2rem;
+    }
+    .explain-def strong {
+      font-family: 'Shippori Mincho', serif;
+      color: var(--gold);
+    }
+
+    .formula-block {
+      background: var(--bg-alt);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: .9rem 1rem;
+      margin-bottom: 1.2rem;
+    }
+    .formula-block p {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .73rem;
+      color: var(--ink-light);
+      line-height: 2;
+      letter-spacing: .02em;
+    }
+    .formula-block p span { color: var(--gold); }
+
+    .risk-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .75rem;
+      margin-bottom: 1rem;
+    }
+    .risk-table th {
+      font-family: 'Shippori Mincho', serif;
+      font-weight: 600;
+      letter-spacing: .1em;
+      color: var(--ink-light);
+      padding: .4rem .6rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    .risk-table td {
+      padding: .5rem .6rem;
+      border-bottom: 1px solid var(--border-light);
+      line-height: 1.4;
+    }
+    .risk-table tr:last-child td { border-bottom: none; }
+    .risk-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: .4rem;
+      vertical-align: middle;
+    }
+
+    .explain-example {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: .86rem;
+      color: var(--ink-light);
+      padding: .7rem .9rem;
+      border-left: 2px solid var(--sakura);
+      letter-spacing: .04em;
+      line-height: 1.7;
+    }
+
+    /* ── Position section tags ── */
+    .pos-section {
+      margin-bottom: 1.6rem;
+    }
+    .pos-section:last-child { margin-bottom: 0; }
+
+    .pos-header {
+      display: flex;
+      align-items: center;
+      gap: .7rem;
+      margin-bottom: 1rem;
+    }
+    .pos-tag {
+      display: inline-flex;
+      align-items: center;
+      font-size: .64rem;
+      font-weight: 600;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+      padding: .25rem .7rem;
+      border-radius: 2px;
+    }
+    .pos-tag.tag-spot    { background: var(--indigo-pale); color: var(--indigo); border: 1px solid rgba(61,78,107,.25); }
+    .pos-tag.tag-etf     { background: rgba(90,138,106,.12); color: var(--safe);   border: 1px solid rgba(90,138,106,.25); }
+    .pos-tag.tag-margin  { background: var(--sakura-pale);  color: var(--sakura); border: 1px solid rgba(196,124,138,.25); }
+    .pos-tag.tag-pledge  { background: var(--gold-pale);    color: var(--gold);   border: 1px solid rgba(184,149,106,.25); }
+    .pos-tag.tag-cash    { background: var(--safe-bg);      color: var(--safe);   border: 1px solid rgba(90,138,106,.25); }
+    .pos-tag.tag-credit  { background: var(--critical-bg);  color: var(--critical); border: 1px solid rgba(176,48,48,.25); }
+
+    .pos-divider {
+      height: 1px;
+      background: var(--border-light);
+      margin: 1.4rem 0;
+    }
+
+    /* ── Input grid ── */
+    .input-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: .9rem 1.4rem;
+    }
+    @media (max-width: 540px) { .input-grid { grid-template-columns: 1fr; } }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: .35rem;
+    }
+    .field label {
+      font-size: .72rem;
+      letter-spacing: .1em;
+      color: var(--ink-light);
+      font-weight: 500;
+    }
+    .field label span {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: .78rem;
+      color: var(--sakura);
+      margin-left: .3rem;
+      letter-spacing: .04em;
+    }
+    .field input[type="number"],
+    .field input[type="text"],
+    .field select {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: .52rem .75rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .92rem;
+      color: var(--ink);
+      outline: none;
+      transition: border-color .18s, box-shadow .18s;
+      -moz-appearance: textfield;
+    }
+    .field select { font-family: 'Noto Sans TC', sans-serif; font-size: .82rem; cursor: pointer; }
+    .field input[type="number"]::-webkit-inner-spin-button,
+    .field input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+    .field input:focus, .field select:focus {
+      border-color: var(--sakura);
+      box-shadow: 0 0 0 3px var(--sakura-pale);
+    }
+    .field.full { grid-column: 1 / -1; }
+
+    .helper-text {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: .76rem;
+      color: var(--ink-light);
+      letter-spacing: .04em;
+      min-height: 1em;
+    }
+    .helper-text.val-ok   { color: var(--safe); }
+    .helper-text.val-warn { color: var(--critical); }
+
+    /* ── ETF rows ── */
+    .etf-rows { display: flex; flex-direction: column; gap: .7rem; }
+
+    .etf-row {
+      display: grid;
+      grid-template-columns: 1fr 160px 110px 32px;
+      gap: .6rem;
+      align-items: end;
+    }
+    @media (max-width: 620px) {
+      .etf-row { grid-template-columns: 1fr 120px 90px 32px; }
+    }
+    @media (max-width: 480px) {
+      .etf-row { grid-template-columns: 1fr 1fr; }
+      .etf-row .field:nth-child(3) { grid-column: 1 / -1; }
+      .etf-row .etf-remove { grid-column: 2; justify-self: end; }
+    }
+
+    .etf-remove {
+      width: 28px;
+      height: 28px;
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      background: var(--bg);
+      color: var(--ink-light);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: .8rem;
+      transition: border-color .18s, color .18s, background .18s;
+      flex-shrink: 0;
+      margin-bottom: 2px;
+    }
+    .etf-remove:hover { border-color: var(--critical); color: var(--critical); background: var(--critical-bg); }
+
+    .add-etf-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      margin-top: .7rem;
+      font-size: .72rem;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--safe);
+      background: var(--safe-bg);
+      border: 1px solid rgba(90,138,106,.3);
+      border-radius: 2px;
+      padding: .35rem .75rem;
+      cursor: pointer;
+      font-family: 'Noto Sans TC', sans-serif;
+      font-weight: 500;
+      transition: background .18s, border-color .18s;
+    }
+    .add-etf-btn:hover { background: rgba(90,138,106,.18); border-color: rgba(90,138,106,.5); }
+
+    /* ── Results split ── */
+    .results-split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.2rem;
+      margin-bottom: 1.4rem;
+    }
+    @media (max-width: 600px) { .results-split { grid-template-columns: 1fr; } }
+    .results-split > .card { margin-bottom: 0; }
+
+    /* ── Metric rows ── */
+    .metric {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: .45rem 0;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .metric:last-child { border-bottom: none; }
+    .metric-label {
+      font-size: .74rem;
+      color: var(--ink-light);
+      letter-spacing: .03em;
+      flex-shrink: 0;
+      padding-right: .5rem;
+    }
+    .metric-label.sub { padding-left: .8rem; font-size: .68rem; opacity: .8; }
+    .metric-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .9rem;
+      font-weight: 500;
+      color: var(--ink);
+      text-align: right;
+    }
+    .metric-value.highlight-g { color: var(--gold);   font-size: 1rem; }
+    .metric-value.highlight-s { color: var(--sakura); font-size: 1rem; }
+    .metric-value.highlight-i { color: var(--indigo); font-size: 1rem; }
+    .metric-value.sub { font-size: .78rem; }
+
+    .metric-divider { height: 1px; background: var(--border); margin: .6rem 0; }
+
+    /* ── Exposure rate block ── */
+    .ratio-block { margin-top: .6rem; }
+    .ratio-label {
+      font-size: .72rem;
+      letter-spacing: .1em;
+      color: var(--ink-light);
+      margin-bottom: .45rem;
+    }
+    .ratio-value {
+      font-family: 'Shippori Mincho', serif;
+      font-size: 2.8rem;
+      font-weight: 600;
+      letter-spacing: .02em;
+      line-height: 1;
+      transition: color .35s;
+    }
+    .ratio-status {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: .88rem;
+      margin-top: .3rem;
+      letter-spacing: .06em;
+      transition: color .35s;
+    }
+    .ratio-lev {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .78rem;
+      color: var(--ink-light);
+      margin-top: .5rem;
+    }
+
+    .c-safe     { color: var(--safe); }
+    .c-mild     { color: var(--gold); }
+    .c-warn     { color: var(--warn); }
+    .c-danger   { color: var(--danger); }
+    .c-critical { color: var(--critical); }
+    .placeholder { color: var(--border); font-style: italic; font-family: 'Cormorant Garamond', serif; font-size: .9rem; }
+
+    /* ── Gauge ── */
+    .gauge-wrap { margin-top: 1.2rem; }
+    .gauge-track {
+      height: 7px;
+      border-radius: 4px;
+      background: linear-gradient(to right,
+        var(--safe) 0%,
+        var(--gold) 33%,
+        var(--warn) 55%,
+        var(--danger) 72%,
+        var(--critical) 100%
+      );
+      position: relative;
+    }
+    .gauge-needle {
+      position: absolute;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 13px;
+      height: 13px;
+      border-radius: 50%;
+      background: var(--ink);
+      border: 2px solid var(--paper);
+      box-shadow: 0 1px 5px rgba(44,36,24,.35);
+      transition: left .45s cubic-bezier(.34,1.56,.64,1);
+    }
+    .gauge-marks {
+      position: relative;
+      height: 12px;
+      margin-top: 2px;
+    }
+    .gauge-mark {
+      position: absolute;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1px;
+    }
+    .gauge-mark .tick { width: 1px; height: 5px; background: var(--border); }
+    .gauge-mark .tick-label { font-size: .58rem; color: var(--ink-light); letter-spacing: .04em; white-space: nowrap; }
+    .gauge-mark:first-child { transform: none; }
+    .gauge-mark:last-child  { transform: translateX(-100%); }
+
+    /* ── Scenario table ── */
+    .scenario-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+    }
+    @media (max-width: 540px) { .scenario-grid { grid-template-columns: 1fr; } }
+
+    .scenario-card {
+      border-radius: 2px;
+      padding: 1.1rem 1rem;
+      border: 1px solid;
+    }
+    .scenario-card.s10 { background: var(--warn-bg);   border-color: rgba(200,151,58,.25); }
+    .scenario-card.s20 { background: var(--danger-bg); border-color: rgba(196,102,42,.25); }
+    .scenario-card.s30 { background: var(--critical-bg); border-color: rgba(176,48,48,.25); }
+
+    .scenario-drop {
+      font-size: .65rem;
+      font-weight: 600;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      margin-bottom: .3rem;
+    }
+    .s10 .scenario-drop { color: var(--warn); }
+    .s20 .scenario-drop { color: var(--danger); }
+    .s30 .scenario-drop { color: var(--critical); }
+
+    .scenario-loss {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.1rem;
+      font-weight: 500;
+      color: var(--ink);
+      margin-bottom: .15rem;
+    }
+    .scenario-remain {
+      font-size: .72rem;
+      color: var(--ink-light);
+      margin-bottom: .2rem;
+    }
+    .scenario-pct {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: .82rem;
+    }
+    .s10 .scenario-pct { color: var(--warn); }
+    .s20 .scenario-pct { color: var(--danger); }
+    .s30 .scenario-pct { color: var(--critical); }
+
+    .breakeven-note {
+      text-align: center;
+      margin-top: 1.2rem;
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: .84rem;
+      color: var(--ink-light);
+      letter-spacing: .06em;
+    }
+    .breakeven-note strong {
+      font-style: normal;
+      font-weight: 400;
+      color: var(--critical);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .8rem;
+    }
+
+    /* ── Warning banner ── */
+    .warning-banner {
+      display: none;
+      background: var(--critical-bg);
+      border: 1px solid rgba(176,48,48,.3);
+      border-radius: 2px;
+      padding: .6rem .9rem;
+      font-size: .75rem;
+      color: var(--critical);
+      letter-spacing: .04em;
+      margin-top: .5rem;
+    }
+    .warning-banner.show { display: block; }
+
+    /* ── Save bar ── */
+    .save-bar {
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      margin-bottom: 1.4rem;
+      flex-wrap: wrap;
+    }
+    .save-bar .saved-at {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: .76rem;
+      color: var(--border);
+      letter-spacing: .06em;
+      flex: 1;
+    }
+    .save-bar .saved-at.has-data { color: var(--ink-light); }
+    .btn-save, .btn-clear {
+      display: inline-flex;
+      align-items: center;
+      gap: .35rem;
+      border: 1px solid;
+      border-radius: 2px;
+      padding: .35rem .85rem;
+      font-size: .72rem;
+      font-family: 'Noto Sans TC', sans-serif;
+      font-weight: 500;
+      letter-spacing: .1em;
+      cursor: pointer;
+      transition: background .18s, border-color .18s, color .18s;
+      white-space: nowrap;
+    }
+    .btn-save {
+      background: var(--indigo-pale);
+      border-color: rgba(61,78,107,.3);
+      color: var(--indigo);
+    }
+    .btn-save:hover { background: rgba(61,78,107,.22); border-color: rgba(61,78,107,.55); }
+    .btn-save.saved {
+      background: var(--safe-bg);
+      border-color: rgba(90,138,106,.4);
+      color: var(--safe);
+    }
+    .btn-clear {
+      background: none;
+      border-color: var(--border);
+      color: var(--ink-light);
+    }
+    .btn-clear:hover { border-color: var(--critical); color: var(--critical); background: var(--critical-bg); }
+
+    /* ── Debt ratio block ── */
+    .debt-block {
+      margin-top: 1.2rem;
+      padding-top: 1.2rem;
+      border-top: 1px dashed var(--border);
+    }
+    .debt-label {
+      font-size: .72rem;
+      letter-spacing: .1em;
+      color: var(--ink-light);
+      margin-bottom: .45rem;
+    }
+    .debt-value {
+      font-family: 'Shippori Mincho', serif;
+      font-size: 2rem;
+      font-weight: 600;
+      letter-spacing: .02em;
+      line-height: 1;
+      transition: color .35s;
+    }
+    .debt-status {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: .84rem;
+      margin-top: .28rem;
+      letter-spacing: .06em;
+      transition: color .35s;
+    }
+    .debt-bar-wrap { margin-top: .9rem; }
+    .debt-bar-track {
+      height: 5px;
+      border-radius: 3px;
+      background: linear-gradient(to right,
+        var(--safe) 0%,
+        var(--gold) 35%,
+        var(--warn) 58%,
+        var(--critical) 100%
+      );
+      position: relative;
+    }
+    .debt-bar-needle {
+      position: absolute;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: var(--ink);
+      border: 2px solid var(--paper);
+      box-shadow: 0 1px 4px rgba(44,36,24,.3);
+      transition: left .4s cubic-bezier(.34,1.56,.64,1);
+    }
+    .debt-bar-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: .59rem;
+      color: var(--ink-light);
+      letter-spacing: .03em;
+      margin-top: 3px;
+    }
+
+    /* ── Liquidity block ── */
+    .liquidity-block {
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px dashed var(--border-light);
+    }
+    .liquidity-label {
+      font-size: .68rem;
+      letter-spacing: .1em;
+      color: var(--ink-light);
+      margin-bottom: .3rem;
+      text-transform: uppercase;
+    }
+    .liquidity-value {
+      font-family: 'Shippori Mincho', serif;
+      font-size: 1.5rem;
+      font-weight: 600;
+      line-height: 1;
+      transition: color .35s;
+    }
+    .liquidity-sub {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: .8rem;
+      color: var(--ink-light);
+      margin-top: .16rem;
+      letter-spacing: .04em;
+    }
+    .liquidity-bar-wrap { margin-top: .7rem; }
+    .liquidity-bar-track {
+      height: 5px;
+      border-radius: 3px;
+      background: linear-gradient(to right,
+        var(--critical) 0%,
+        var(--danger)   33%,
+        var(--warn)     50%,
+        var(--gold)     66%,
+        var(--safe)     100%
+      );
+      position: relative;
+    }
+    .liquidity-bar-needle {
+      position: absolute;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: var(--ink);
+      border: 2px solid var(--paper);
+      box-shadow: 0 1px 4px rgba(44,36,24,.3);
+      transition: left .4s cubic-bezier(.34,1.56,.64,1);
+    }
+    .liquidity-bar-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: .59rem;
+      color: var(--ink-light);
+      letter-spacing: .03em;
+      margin-top: 3px;
+    }
+    .cashflow-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-top: .8rem;
+      padding-top: .7rem;
+      border-top: 1px solid var(--border-light);
+      font-size: .75rem;
+    }
+    .cashflow-label { color: var(--ink-light); }
+    .cashflow-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .85rem;
+      font-weight: 500;
+    }
+
+    /* ── Section note ── */
+    .pos-note {
+      margin-top: .75rem;
+      padding: .6rem .85rem;
+      background: var(--bg-alt);
+      border-left: 2px solid var(--border);
+      border-radius: 0 2px 2px 0;
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: .82rem;
+      color: var(--ink-light);
+      line-height: 1.7;
+      letter-spacing: .04em;
+    }
+    .pos-note strong {
+      font-style: normal;
+      font-weight: 600;
+      font-family: 'Noto Sans TC', sans-serif;
+      font-size: .72rem;
+      letter-spacing: .08em;
+    }
+    .pos-note .no  { color: var(--critical); }
+    .pos-note .yes { color: var(--safe); }
+
+    /* ── Note ── */
+    .note {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: .75rem;
+      color: var(--ink-light);
+      letter-spacing: .06em;
+      text-align: center;
+      margin-top: 2rem;
+      opacity: .65;
+      line-height: 1.8;
+    }
+
+    /* ── Animations ── */
+    @keyframes fadeDown {
+      from { opacity: 0; transform: translateY(-14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .card:nth-child(1) { animation-delay: .04s; }
+    .card:nth-child(2) { animation-delay: .10s; }
+    .card:nth-child(3) { animation-delay: .16s; }
+    .card:nth-child(4) { animation-delay: .22s; }
+    .card:nth-child(5) { animation-delay: .28s; }
+    .card:nth-child(6) { animation-delay: .34s; }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <a class="back" href="index.html"> 返回工具集</a>
+
+    <header class="header">
+      <p class="eyebrow">Portfolio Risk</p>
+      <h1>曝險計算機</h1>
+      <p class="sub">Exposure Rate Calculator — 現股・槓桿ETF・融資・質押</p>
+      <div class="rule"></div>
+    </header>
+
+    <!-- ── 說明 ── -->
+    <div class="card">
+      <button class="explain-toggle" onclick="toggleExplain()" aria-expanded="false" id="explain-btn">
+        <span class="toggle-label">什麼是曝險率？</span>
+        <span class="toggle-arrow" id="toggle-arrow">▼</span>
+      </button>
+      <div class="explain-body" id="explain-body">
+        <div class="explain-rule"></div>
+
+        <p class="explain-def">
+          <strong>曝險率</strong>是衡量你的股票部位相對於自有淨資產的比率，代表市場波動對你整體財富的<strong>實際放大倍數</strong>。
+          超過 100% 代表你已使用槓桿——市場的漲跌對你的影響，都會被等比例放大。
+        </p>
+
+        <div class="formula-block">
+          <p><span>曝險率</span> = 總股票曝險 ÷ 自有淨資產 × 100%</p>
+          <p>總股票曝險 = 現股市值 + 槓桿ETF有效曝險 + 融資總市值 + 質押股市值</p>
+          <p>總資產 = 現股市值 + 槓桿ETF市值 + 融資總市值 + 質押股市值 + 現金</p>
+          <p>自有淨資產 = 總資產 − 融資借款 − 質押借款 − 信貸借款</p>
+          <p style="margin-top:.4rem; color: var(--border);">槓桿ETF有效曝險 = 市值 × 槓桿倍數（如 00631L 持有100萬 → 曝險200萬）</p>
+          <p>融資自備款 = 融資總市值 − 融資借款　｜　質押股淨值 = 質押股市值 − 質押借款</p>
+        </div>
+
+        <table class="risk-table">
+          <thead>
+            <tr>
+              <th>曝險率</th>
+              <th>狀態</th>
+              <th>說明</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="risk-dot" style="background:var(--safe)"></span>&lt; 50%</td>
+              <td style="color:var(--safe)">保守</td>
+              <td>大量現金緩衝，市場波動影響有限</td>
+            </tr>
+            <tr>
+              <td><span class="risk-dot" style="background:var(--gold)"></span>50–100%</td>
+              <td style="color:var(--gold)">穩健</td>
+              <td>以現股為主，仍保有部分現金</td>
+            </tr>
+            <tr>
+              <td><span class="risk-dot" style="background:var(--warn)"></span>100–150%</td>
+              <td style="color:var(--warn)">積極</td>
+              <td>輕度槓桿，下跌損失超過本金比例</td>
+            </tr>
+            <tr>
+              <td><span class="risk-dot" style="background:var(--danger)"></span>150–200%</td>
+              <td style="color:var(--danger)">高曝險</td>
+              <td>中度槓桿，需嚴格控管部位</td>
+            </tr>
+            <tr>
+              <td><span class="risk-dot" style="background:var(--critical)"></span>&gt; 200%</td>
+              <td style="color:var(--critical)">危險</td>
+              <td>重度槓桿，市場微幅震盪即可造成重大損失</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="explain-example">
+          例：曝險率 200%，市場下跌 10% → 你的淨資產損失 20%。<br>
+          若持有 00631L（2倍槓桿ETF）100萬，其有效市場曝險為 200萬，計入曝險率計算。
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 輸入 ── -->
+    <div class="card">
+      <div class="card-title">部位輸入</div>
+
+      <div class="save-bar">
+        <span class="saved-at" id="saved-at">尚未儲存</span>
+        <button class="btn-save" id="btn-save" onclick="saveData()">儲存部位</button>
+        <button class="btn-clear" id="btn-clear" onclick="clearData()">清除資料</button>
+      </div>
+
+      <!-- 現股 -->
+      <div class="pos-section">
+        <div class="pos-header">
+          <span class="pos-tag tag-spot">現股</span>
+          <span style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:.78rem;color:var(--ink-light);">現貨股票，以自有資金買入</span>
+        </div>
+        <div class="input-grid">
+          <div class="field">
+            <label>現股總市值<span>元</span></label>
+            <input type="number" id="spot-value" placeholder="例：1,500,000" min="0" step="1">
+          </div>
+        </div>
+        <div class="pos-note">
+          <span class="yes">✓ 填入：</span>用自有現金買的一般股票（含一般 ETF 如 0050、006208）<br>
+          <span class="no">✗ 不要填：</span>槓桿/反向 ETF（如 00631L）→ 填下方 ETF 欄；拿去質押的股票 → 填質押欄；用融資買的股票 → 填融資欄
+        </div>
+      </div>
+
+      <div class="pos-divider"></div>
+
+      <!-- 槓桿/反向 ETF -->
+      <div class="pos-section">
+        <div class="pos-header">
+          <span class="pos-tag tag-etf">槓桿 / 反向 ETF</span>
+          <span style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:.78rem;color:var(--ink-light);">如 00631L（正2）、00632R（反1）</span>
+        </div>
+
+        <div class="etf-rows" id="etf-rows">
+          <!-- rows injected by JS -->
+        </div>
+
+        <button class="add-etf-btn" onclick="addEtfRow()">＋ 新增 ETF</button>
+        <div class="warning-banner" id="warn-etf">部分 ETF 資料不完整，請確認市值與槓桿倍數均已填寫。</div>
+
+        <div class="pos-note">
+          <span class="yes">✓ 填入：</span>槓桿或反向型 ETF，例如 00631L（正2倍）、00632R（反1倍）<br>
+          <span class="no">✗ 不要填：</span>一般 ETF（如 0050、006208）→ 填現股欄；同一筆 ETF 不要同時也填進現股欄，否則會重複計算
+        </div>
+      </div>
+
+      <div class="pos-divider"></div>
+
+      <!-- 融資 -->
+      <div class="pos-section">
+        <div class="pos-header">
+          <span class="pos-tag tag-margin">融資</span>
+          <span style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:.78rem;color:var(--ink-light);">向券商借款買股，自備款 + 借款 = 總市值</span>
+        </div>
+        <div class="input-grid">
+          <div class="field">
+            <label>融資總市值<span>元（含借款部分）</span></label>
+            <input type="number" id="margin-val" placeholder="例：600,000" min="0" step="1">
+          </div>
+          <div class="field">
+            <label>融資借款金額<span>元</span></label>
+            <input type="number" id="margin-loan" placeholder="例：360,000" min="0" step="1">
+            <span class="helper-text" id="margin-equity-hint"> </span>
+          </div>
+        </div>
+        <div class="warning-banner" id="warn-margin">融資借款不得大於融資總市值。</div>
+        <div class="pos-note">
+          <span class="yes">✓ 填入：</span>用融資（向券商借款）買入的股票部位，填「總市值」與「融資借款金額」，工具會自動算出你的自備款<br>
+          <span class="no">✗ 不要填：</span>融資買的股票不要同時再填進現股欄，否則曝險會計算兩次
+        </div>
+      </div>
+
+      <div class="pos-divider"></div>
+
+      <!-- 質押 -->
+      <div class="pos-section">
+        <div class="pos-header">
+          <span class="pos-tag tag-pledge">質押</span>
+          <span style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:.78rem;color:var(--ink-light);">以持股作擔保向銀行/券商借款</span>
+        </div>
+        <div class="input-grid">
+          <div class="field">
+            <label>質押股市值<span>元（目前市價）</span></label>
+            <input type="number" id="pledge-val" placeholder="例：2,000,000" min="0" step="1">
+          </div>
+          <div class="field">
+            <label>質押借款金額<span>元</span></label>
+            <input type="number" id="pledge-loan" placeholder="例：1,200,000" min="0" step="1">
+            <span class="helper-text" id="pledge-equity-hint"> </span>
+          </div>
+        </div>
+        <div class="warning-banner" id="warn-pledge">質押借款不得大於質押股市值。</div>
+        <div class="pos-note">
+          <span class="yes">✓ 填入：</span>拿去質押的股票（目前市值）與質押借款金額；質押股你仍然持有，漲跌你全部承擔<br>
+          <span class="no">✗ 不要填：</span>已填在質押欄的股票不要再填一次現股欄，否則市值與曝險都會算兩次
+        </div>
+      </div>
+
+      <div class="pos-divider"></div>
+
+      <!-- 信貸 -->
+      <div class="pos-section">
+        <div class="pos-header">
+          <span class="pos-tag tag-credit">信貸</span>
+          <span style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:.78rem;color:var(--ink-light);">向銀行借的個人信用貸款</span>
+        </div>
+        <div class="input-grid">
+          <div class="field">
+            <label>信貸借款金額<span>元</span></label>
+            <input type="number" id="credit-loan" placeholder="例：1,000,000" min="0" step="1">
+          </div>
+        </div>
+        <div class="pos-note">
+          <span class="yes">✓ 填入：</span>向銀行申請的個人信用貸款餘額（尚未還清的部分）<br>
+          若信貸資金已買股 → 股票填在現股欄，信貸借款填這裡；若還放在帳戶 → 現金也照填，信貸借款仍填這裡<br>
+          <span class="no">✗ 不是這裡：</span>房貸、車貸等有實體抵押品的貸款通常不影響投資曝險，可不填
+        </div>
+      </div>
+
+      <div class="pos-divider"></div>
+
+      <!-- 現金 -->
+      <div class="pos-section" style="margin-bottom:0">
+        <div class="pos-header">
+          <span class="pos-tag tag-cash">現金</span>
+          <span style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:.78rem;color:var(--ink-light);">投資帳戶或銀行可動用現金</span>
+        </div>
+        <div class="input-grid">
+          <div class="field">
+            <label>現金部位<span>元</span></label>
+            <input type="number" id="cash" placeholder="例：500,000" min="0" step="1">
+          </div>
+        </div>
+        <div class="pos-note">
+          <span class="yes">✓ 填入：</span>券商交割帳戶餘額、銀行可動用現金，這是你的緩衝，越多則曝險率越低<br>
+          <span class="no">✗ 不要填：</span>已借出去的質押借款或融資金額不算現金（那是負債，已在各欄借款中扣除）
+        </div>
+      </div>
+
+      <div class="pos-divider"></div>
+
+      <!-- 月薪 / 月付款 -->
+      <div class="pos-section" style="margin-bottom:0">
+        <div class="pos-header">
+          <span class="pos-tag" style="background:rgba(61,78,107,.1);color:var(--indigo);border:1px solid rgba(61,78,107,.2);">月收支</span>
+          <span style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:.78rem;color:var(--ink-light);">用於計算收入還債能力與流動比率</span>
+        </div>
+        <div class="input-grid">
+          <div class="field">
+            <label>稅後月收入<span>元</span></label>
+            <input type="number" id="monthly-income" placeholder="例：80,000" min="0" step="1">
+          </div>
+          <div class="field">
+            <label>月付款合計<span>元（利息＋還款）</span></label>
+            <input type="number" id="monthly-payment" placeholder="例：25,000" min="0" step="1">
+            <span class="helper-text" id="cashflow-hint"> </span>
+          </div>
+        </div>
+        <div class="pos-note">
+          <span class="yes">月收入</span>：每月稅後實拿薪資，用於「還清負債需幾個月薪水」<br>
+          <span class="yes">月付款</span>：每月固定需支付的借款（融資利息、質押利息、信貸月繳等）合計，用於計算<strong>流動比率</strong>（現金能撐幾個月）與<strong>月現金流</strong>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── Results ── -->
+    <div class="results-split">
+
+      <!-- 部位摘要 -->
+      <div class="card">
+        <div class="card-title">部位摘要</div>
+
+        <div class="metric">
+          <span class="metric-label">現股市值</span>
+          <span class="metric-value" id="r-spot">—</span>
+        </div>
+
+        <div class="metric">
+          <span class="metric-label">槓桿ETF市值</span>
+          <span class="metric-value" id="r-etf-val">—</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label sub">有效市場曝險</span>
+          <span class="metric-value sub" id="r-etf-exp">—</span>
+        </div>
+
+        <div class="metric">
+          <span class="metric-label">融資總市值</span>
+          <span class="metric-value" id="r-margin-val">—</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label sub">自備款</span>
+          <span class="metric-value sub" id="r-margin-eq">—</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label sub">借款</span>
+          <span class="metric-value sub" id="r-margin-loan">—</span>
+        </div>
+
+        <div class="metric">
+          <span class="metric-label">質押股市值</span>
+          <span class="metric-value" id="r-pledge-val">—</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label sub">質押股淨值</span>
+          <span class="metric-value sub" id="r-pledge-eq">—</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label sub">借款</span>
+          <span class="metric-value sub" id="r-pledge-loan">—</span>
+        </div>
+
+        <div class="metric">
+          <span class="metric-label">現金</span>
+          <span class="metric-value" id="r-cash">—</span>
+        </div>
+
+        <div class="metric-divider"></div>
+
+        <div class="metric">
+          <span class="metric-label">總資產<span style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:.68rem;color:var(--ink-light);margin-left:.4rem;">含借款部分</span></span>
+          <span class="metric-value" id="r-total-assets">—</span>
+        </div>
+
+        <div class="metric-divider"></div>
+
+        <div class="metric">
+          <span class="metric-label sub">− 融資借款<span style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:.68rem;color:var(--border);margin-left:.4rem;">已從淨資產扣除；信用交易故不列入負債比</span></span>
+          <span class="metric-value sub" id="r-debt-margin">—</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label sub">− 質押借款</span>
+          <span class="metric-value sub" id="r-debt-pledge">—</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label sub">− 信貸借款</span>
+          <span class="metric-value sub" id="r-debt-credit">—</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">＝ 自有淨資產</span>
+          <span class="metric-value highlight-i" id="r-net-assets">—</span>
+        </div>
+
+        <div class="metric-divider"></div>
+
+        <div class="metric">
+          <span class="metric-label">總股票曝險</span>
+          <span class="metric-value highlight-g" id="r-total-exp">—</span>
+        </div>
+
+        <div class="warning-banner" id="warn-negative">⚠ 自有淨資產為負數，借款已超過所有資產價值。</div>
+      </div>
+
+      <!-- 曝險評估 -->
+      <div class="card">
+        <div class="card-title">曝險評估</div>
+
+        <div class="ratio-block">
+          <div class="ratio-label">綜合曝險率</div>
+          <div class="ratio-value" id="exposure-rate-val">
+            <span class="placeholder">請輸入部位資料</span>
+          </div>
+          <div class="ratio-status" id="exposure-status"></div>
+          <div class="ratio-lev" id="leverage-val"></div>
+        </div>
+
+        <div class="gauge-wrap" id="gauge-wrap" style="display:none">
+          <div class="gauge-track">
+            <div class="gauge-needle" id="gauge-needle"></div>
+          </div>
+          <div class="gauge-marks">
+            <div class="gauge-mark" style="left:0%">
+              <div class="tick"></div>
+              <div class="tick-label">0%</div>
+            </div>
+            <div class="gauge-mark" style="left:33.3%">
+              <div class="tick"></div>
+              <div class="tick-label">100%</div>
+            </div>
+            <div class="gauge-mark" style="left:66.6%">
+              <div class="tick"></div>
+              <div class="tick-label">200%</div>
+            </div>
+            <div class="gauge-mark" style="left:100%">
+              <div class="tick"></div>
+              <div class="tick-label">300%+</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 負債比 -->
+        <div class="debt-block" id="debt-block" style="display:none">
+          <div class="debt-label">資產負債比</div>
+          <div class="debt-value" id="debt-ratio-val">—</div>
+          <div class="debt-status" id="debt-ratio-status"></div>
+          <div class="debt-bar-wrap">
+            <div class="debt-bar-track">
+              <div class="debt-bar-needle" id="debt-needle"></div>
+            </div>
+            <div class="debt-bar-labels">
+              <span>安全 &lt;30%</span>
+              <span>注意 50%</span>
+              <span>高負債 70%</span>
+              <span>危險 &gt;80%</span>
+            </div>
+          </div>
+
+          <!-- 流動比率（需填月付款才顯示） -->
+          <div class="liquidity-block" id="liquidity-block" style="display:none">
+            <div class="liquidity-label">流動比率 Current Ratio</div>
+            <div class="liquidity-value" id="liquidity-value">—</div>
+            <div class="liquidity-sub" id="liquidity-sub"></div>
+            <div class="liquidity-breakdown" id="liquidity-breakdown" style="font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--ink-light);margin-top:.35rem;line-height:1.8;"></div>
+            <div class="liquidity-bar-wrap">
+              <div class="liquidity-bar-track">
+                <div class="liquidity-bar-needle" id="liquidity-needle"></div>
+              </div>
+              <div class="liquidity-bar-labels">
+                <span>&lt;100% 危險</span>
+                <span>150%</span>
+                <span>200% 健康</span>
+                <span>300%+</span>
+              </div>
+            </div>
+            <div class="cashflow-row" id="cashflow-row" style="display:none">
+              <span class="cashflow-label">月現金流（月薪 − 月付款）</span>
+              <span class="cashflow-value" id="cashflow-value">—</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ── 情境分析 ── -->
+    <div class="card" id="scenario-card" style="display:none">
+      <div class="card-title">市場情境分析</div>
+
+      <div class="scenario-grid">
+        <div class="scenario-card s10">
+          <div class="scenario-drop">市場跌 −10%</div>
+          <div class="scenario-loss" id="s10-loss">—</div>
+          <div class="scenario-remain" id="s10-remain">—</div>
+          <div class="scenario-pct" id="s10-pct">—</div>
+        </div>
+        <div class="scenario-card s20">
+          <div class="scenario-drop">市場跌 −20%</div>
+          <div class="scenario-loss" id="s20-loss">—</div>
+          <div class="scenario-remain" id="s20-remain">—</div>
+          <div class="scenario-pct" id="s20-pct">—</div>
+        </div>
+        <div class="scenario-card s30">
+          <div class="scenario-drop">市場跌 −30%</div>
+          <div class="scenario-loss" id="s30-loss">—</div>
+          <div class="scenario-remain" id="s30-remain">—</div>
+          <div class="scenario-pct" id="s30-pct">—</div>
+        </div>
+      </div>
+
+      <div class="breakeven-note" id="breakeven-note"></div>
+    </div>
+
+    <p class="note">
+      曝險率 = 總股票曝險 ÷ 自有淨資產 × 100%　｜　負債比 = 總借款（融資＋質押＋信貸）÷ 總資產 × 100%<br>
+      槓桿ETF（如00631L）以市值 × 槓桿倍數計算有效曝險；反向ETF以負倍數計算，可降低整體曝險<br>
+      本計算機僅供參考，不構成任何投資建議。
+    </p>
+
+  </div>
+
+  <script>
+    const $ = id => document.getElementById(id);
+
+    // ── Explain toggle ──
+    function toggleExplain() {
+      const body = $('explain-body');
+      const btn  = $('explain-btn');
+      const arrow = $('toggle-arrow');
+      const isOpen = body.classList.contains('open');
+      body.classList.toggle('open', !isOpen);
+      btn.setAttribute('aria-expanded', String(!isOpen));
+      arrow.textContent = isOpen ? '▼' : '▲';
+    }
+
+    // ── ETF row management ──
+    let etfRowId = 0;
+
+    const ETF_PRESETS = [
+      { label: '自訂', val: '' },
+      { label: '正2（如00631L）', val: '2' },
+      { label: '正3', val: '3' },
+      { label: '反1（如00632R）', val: '-1' },
+      { label: '反2', val: '-2' },
+    ];
+
+    function addEtfRow(defaultLev = '2', defaultVal = '') {
+      const id = ++etfRowId;
+      const row = document.createElement('div');
+      row.className = 'etf-row';
+      row.id = `etf-row-${id}`;
+
+      const presetOpts = ETF_PRESETS.map(p =>
+        `<option value="${p.val}" ${p.val === defaultLev ? 'selected' : ''}>${p.label}</option>`
+      ).join('');
+
+      row.innerHTML = `
+        <div class="field">
+          <label>ETF市值<span>元</span></label>
+          <input type="number" id="etf-val-${id}" placeholder="例：300,000" min="0" step="1"
+            ${defaultVal !== '' ? `value="${defaultVal}"` : ''}>
+        </div>
+        <div class="field">
+          <label>槓桿倍數<span>（正/反）</span></label>
+          <select id="etf-preset-${id}">
+            ${presetOpts}
+          </select>
+        </div>
+        <div class="field">
+          <label>自訂倍數</label>
+          <input type="number" id="etf-lev-${id}" placeholder="如 2 或 -1"
+            value="${defaultLev}" step="0.5">
+        </div>
+        <button class="etf-remove" onclick="removeEtfRow(${id})" title="移除">✕</button>
+      `;
+
+      $('etf-rows').appendChild(row);
+
+      // sync preset ↔ custom
+      $(`etf-preset-${id}`).addEventListener('change', () => {
+        const v = $(`etf-preset-${id}`).value;
+        if (v !== '') $(`etf-lev-${id}`).value = v;
+        calculate();
+      });
+      $(`etf-val-${id}`).addEventListener('input', calculate);
+      $(`etf-lev-${id}`).addEventListener('input', () => {
+        $(`etf-preset-${id}`).value = '';
+        calculate();
+      });
+
+      calculate();
+    }
+
+    function removeEtfRow(id) {
+      const row = $(`etf-row-${id}`);
+      if (row) row.remove();
+      calculate();
+    }
+
+    function getEtfData() {
+      let totalVal = 0, totalExp = 0;
+      const rows = $('etf-rows').querySelectorAll('.etf-row');
+      rows.forEach(row => {
+        const idMatch = row.id.match(/etf-row-(\d+)/);
+        if (!idMatch) return;
+        const rid = idMatch[1];
+        const val = parseFloat($(`etf-val-${rid}`).value) || 0;
+        const lev = parseFloat($(`etf-lev-${rid}`).value) || 0;
+        totalVal += val;
+        totalExp += val * lev;
+      });
+      return { totalVal, totalExp };
+    }
+
+    // ── Format ──
+    function fmt(n, dec = 0) {
+      if (n === null || !isFinite(n)) return '—';
+      return n.toLocaleString('zh-TW', {
+        minimumFractionDigits: dec,
+        maximumFractionDigits: dec
+      });
+    }
+    function fmtNT(n, dec = 0) {
+      if (n === null || !isFinite(n) || isNaN(n)) return '—';
+      return 'NT$ ' + fmt(n, dec);
+    }
+
+    // ── Risk level ──
+    function riskLevel(rate) {
+      if (rate < 50)  return { cls: 'c-safe',     text: '保守 — 現金充裕，曝險極低' };
+      if (rate < 100) return { cls: 'c-mild',     text: '穩健 — 以現股為主，風險可控' };
+      if (rate < 150) return { cls: 'c-warn',     text: '積極 — 輕度槓桿，需留意市場波動' };
+      if (rate < 200) return { cls: 'c-danger',   text: '高曝險 — 中度槓桿，嚴控部位' };
+      return              { cls: 'c-critical',  text: '危險 — 重度槓桿，波動風險極大' };
+    }
+
+    // ── Debt ratio level ──
+    function debtLevel(rate) {
+      if (rate < 30) return { cls: 'c-safe',     text: '安全 — 負債比低，財務結構穩健' };
+      if (rate < 50) return { cls: 'c-mild',     text: '注意 — 負債比適中，仍在可控範圍' };
+      if (rate < 70) return { cls: 'c-warn',     text: '偏高 — 負債比高，償債壓力上升' };
+      if (rate < 80) return { cls: 'c-danger',   text: '高負債 — 資產大幅縮水時恐難應付' };
+      return              { cls: 'c-critical',  text: '危險 — 負債率過高，財務風險極大' };
+    }
+
+    // ── Scenario ──
+    function fillScenario(id, drop, totalExp, netAssets) {
+      const loss    = totalExp * drop;
+      const remain  = netAssets - loss;
+      const lossPct = (loss / netAssets) * 100;
+
+      $(id + '-loss').textContent   = '損失 ' + fmtNT(loss);
+      if (remain <= 0) {
+        $(id + '-remain').textContent = '淨資產歸零';
+        $(id + '-remain').style.color = 'var(--critical)';
+        $(id + '-pct').textContent    = '損失 ≥ 100% 淨資產';
+      } else {
+        $(id + '-remain').textContent = '剩餘 ' + fmtNT(remain);
+        $(id + '-remain').style.color = '';
+        $(id + '-pct').textContent    = '損失 ' + fmt(lossPct, 1) + '% 淨資產';
+      }
+    }
+
+    // ── Main calculation ──
+    function calculate() {
+      const spotVal       = parseFloat($('spot-value').value)     || 0;
+      const marginVal     = parseFloat($('margin-val').value)     || 0;
+      const marginLoan    = parseFloat($('margin-loan').value)    || 0;
+      const pledgeVal     = parseFloat($('pledge-val').value)     || 0;
+      const pledgeLoan    = parseFloat($('pledge-loan').value)    || 0;
+      const creditLoan    = parseFloat($('credit-loan').value)    || 0;
+      const cash          = parseFloat($('cash').value)           || 0;
+      const monthlyIncome  = parseFloat($('monthly-income').value)  || 0;
+      const monthlyPayment = parseFloat($('monthly-payment').value) || 0;
+      const { totalVal: etfVal, totalExp: etfExp } = getEtfData();
+
+      // Validation
+      const badMargin = marginVal > 0 && marginLoan > marginVal;
+      const badPledge = pledgeVal > 0 && pledgeLoan > pledgeVal;
+      $('warn-margin').classList.toggle('show', badMargin);
+      $('warn-pledge').classList.toggle('show', badPledge);
+
+      const marginEq = Math.max(0, marginVal - marginLoan);
+      const pledgeEq = Math.max(0, pledgeVal - pledgeLoan);
+
+      // Helper texts
+      if (marginVal > 0 && marginLoan >= 0) {
+        const me = marginVal - marginLoan;
+        const mh = $('margin-equity-hint');
+        mh.textContent = '融資自備款：' + fmtNT(me);
+        mh.className = 'helper-text ' + (me >= 0 ? 'val-ok' : 'val-warn');
+      } else {
+        $('margin-equity-hint').textContent = ' ';
+        $('margin-equity-hint').className = 'helper-text';
+      }
+      if (pledgeVal > 0 && pledgeLoan >= 0) {
+        const pe = pledgeVal - pledgeLoan;
+        const ph = $('pledge-equity-hint');
+        ph.textContent = '質押股淨值：' + fmtNT(pe);
+        ph.className = 'helper-text ' + (pe >= 0 ? 'val-ok' : 'val-warn');
+      } else {
+        $('pledge-equity-hint').textContent = ' ';
+        $('pledge-equity-hint').className = 'helper-text';
+      }
+
+      // Monthly cashflow hint (live under payment input)
+      if (monthlyIncome > 0 && monthlyPayment > 0) {
+        const flow = monthlyIncome - monthlyPayment;
+        const ch = $('cashflow-hint');
+        ch.textContent = '月現金流：' + (flow >= 0 ? '+' : '') + fmtNT(flow);
+        ch.className = 'helper-text ' + (flow >= 0 ? 'val-ok' : 'val-warn');
+      } else {
+        $('cashflow-hint').textContent = ' ';
+        $('cashflow-hint').className   = 'helper-text';
+      }
+
+      // Totals
+      // 融資為券商信用交易，不列入負債比（不顯示於銀行聯徵）
+      const totalStockExp    = spotVal + etfExp + marginVal + pledgeVal;
+      const totalLoan        = marginLoan + pledgeLoan + creditLoan;     // 全部借款（摘要用）
+      const debtRatioLoan    = pledgeLoan + creditLoan;                  // 負債比負債（排除融資借款）
+      const totalAssets      = spotVal + etfVal + marginVal + pledgeVal + cash;         // 流動比率用（毛額）
+      const debtRatioAssets  = spotVal + etfVal + marginEq + pledgeVal + cash;         // 負債比資產（融資只算自備款）
+      const netAssets        = spotVal + etfVal + marginEq + pledgeEq + cash - creditLoan; // 曝險率用（扣除所有外部負債）
+
+      // Summary panel
+      $('r-spot').textContent        = spotVal    > 0 ? fmtNT(spotVal)    : '—';
+      $('r-etf-val').textContent     = etfVal     > 0 ? fmtNT(etfVal)     : '—';
+      $('r-etf-exp').textContent     = etfVal     > 0 ? fmtNT(etfExp)     : '—';
+      $('r-margin-val').textContent  = marginVal  > 0 ? fmtNT(marginVal)  : '—';
+      $('r-margin-eq').textContent   = marginVal  > 0 ? fmtNT(marginEq)   : '—';
+      $('r-margin-loan').textContent = marginVal  > 0 ? fmtNT(marginLoan) : '—';
+      $('r-pledge-val').textContent  = pledgeVal  > 0 ? fmtNT(pledgeVal)  : '—';
+      $('r-pledge-eq').textContent   = pledgeVal  > 0 ? fmtNT(pledgeEq)   : '—';
+      $('r-pledge-loan').textContent = pledgeVal  > 0 ? fmtNT(pledgeLoan) : '—';
+      $('r-cash').textContent        = cash       > 0 ? fmtNT(cash)       : '—';
+      // 總資產 & 負債明細
+      $('r-total-assets').textContent = totalAssets > 0 ? fmtNT(totalAssets) : '—';
+      $('r-debt-margin').textContent  = marginLoan > 0 ? fmtNT(marginLoan) : '—';
+      $('r-debt-pledge').textContent  = pledgeLoan > 0 ? fmtNT(pledgeLoan) : '—';
+      $('r-debt-credit').textContent  = creditLoan > 0 ? fmtNT(creditLoan) : '—';
+      $('r-net-assets').textContent   = isFinite(netAssets) && totalAssets > 0
+                                        ? fmtNT(netAssets) : '—';
+      $('r-total-exp').textContent    = totalStockExp > 0 ? fmtNT(totalStockExp) : '—';
+
+      const negWarn = $('warn-negative');
+      negWarn.classList.toggle('show', netAssets <= 0 && totalAssets > 0);
+
+      // Exposure rate
+      const hasData = totalAssets > 0;
+
+      if (!hasData || netAssets <= 0) {
+        $('exposure-rate-val').innerHTML = '<span class="placeholder">請輸入部位資料</span>';
+        $('exposure-status').textContent = '';
+        $('exposure-status').className   = 'ratio-status';
+        $('leverage-val').textContent    = '';
+        $('gauge-wrap').style.display    = 'none';
+        $('debt-block').style.display    = 'none';
+        $('scenario-card').style.display = 'none';
+        return;
+      }
+
+      const exposureRate = (totalStockExp / netAssets) * 100;
+      const leverage     = totalStockExp / netAssets;
+      const risk         = riskLevel(exposureRate);
+
+      const rateEl = $('exposure-rate-val');
+      rateEl.innerHTML = '';
+      rateEl.textContent = fmt(exposureRate, 1) + '%';
+      rateEl.className = 'ratio-value ' + risk.cls;
+
+      const statusEl = $('exposure-status');
+      statusEl.textContent = risk.text;
+      statusEl.className   = 'ratio-status ' + risk.cls;
+
+      $('leverage-val').textContent = '槓桿倍率 ' + fmt(leverage, 2) + ' 倍';
+
+      // Debt ratio（融資為信用交易，排除在外，只計質押+信貸）
+      $('debt-block').style.display = 'block';
+      if (debtRatioLoan > 0 && debtRatioAssets > 0) {
+        const debtRatio = (debtRatioLoan / debtRatioAssets) * 100;
+        const debt      = debtLevel(debtRatio);
+        $('debt-ratio-val').textContent    = fmt(debtRatio, 1) + '%';
+        $('debt-ratio-val').className      = 'debt-value ' + debt.cls;
+        $('debt-ratio-status').textContent = debt.text;
+        $('debt-ratio-status').className   = 'debt-status ' + debt.cls;
+        $('debt-needle').style.left = Math.min(debtRatio / 100, 1) * 100 + '%';
+      } else {
+        $('debt-ratio-val').textContent    = '0.0%';
+        $('debt-ratio-val').className      = 'debt-value c-safe';
+        $('debt-ratio-status').textContent = '安全 — 無質押或信貸借款';
+        $('debt-ratio-status').className   = 'debt-status c-safe';
+        $('debt-needle').style.left = '0%';
+      }
+
+      // 流動比率 Current Ratio = 流動資產 ÷ 流動負債 × 100%
+      // 流動資產 = 現金 + 全部持倉市值（一年內可變現）
+      // 流動負債 = 月付款 × 12（年度債務義務）
+      const liqBlock = $('liquidity-block');
+      if (monthlyPayment > 0) {
+        const currentAssets     = totalAssets;                  // 現金 + 全部股票市值
+        const currentLiabilities = monthlyPayment * 12;         // 年度付款義務
+        const currentRatio       = (currentAssets / currentLiabilities) * 100;
+        const liqEl  = $('liquidity-value');
+        const liqSub = $('liquidity-sub');
+
+        liqEl.textContent = fmt(currentRatio, 1) + '%';
+
+        let liqClass, liqText;
+        if      (currentRatio >= 200) { liqClass = 'c-safe';     liqText = '安全 — 流動資產超過年付款兩倍，償債能力充足'; }
+        else if (currentRatio >= 150) { liqClass = 'c-mild';     liqText = '健康 — 符合 150–200% 合理區間'; }
+        else if (currentRatio >= 100) { liqClass = 'c-warn';     liqText = '注意 — 低於 150%，資金調度壓力上升'; }
+        else                           { liqClass = 'c-critical'; liqText = '危險 — 流動資產不足以應付年度債務，短期有周轉風險'; }
+
+        liqEl.className    = 'liquidity-value ' + liqClass;
+        liqSub.textContent = liqText;
+        liqSub.className   = 'liquidity-sub ' + liqClass;
+
+        $('liquidity-breakdown').textContent =
+          '流動資產 ' + fmtNT(currentAssets) +
+          '  ÷  流動負債 ' + fmtNT(currentLiabilities);
+
+        // bar: 0 → 300% mapped to 0 → 100%
+        $('liquidity-needle').style.left = Math.min(currentRatio / 300, 1) * 100 + '%';
+        liqBlock.style.display = 'block';
+
+        // 月現金流
+        const flowRow = $('cashflow-row');
+        if (monthlyIncome > 0) {
+          const flow   = monthlyIncome - monthlyPayment;
+          const flowEl = $('cashflow-value');
+          flowEl.textContent = (flow >= 0 ? '+' : '') + fmtNT(flow) + ' / 月';
+          flowEl.className   = 'cashflow-value ' + (flow >= 0 ? 'c-safe' : 'c-critical');
+          flowRow.style.display = 'flex';
+        } else {
+          flowRow.style.display = 'none';
+        }
+      } else {
+        liqBlock.style.display = 'none';
+      }
+
+      // Gauge needle: 0% → 300%, mapped to 0% → 100% of bar
+      const needlePct = Math.min(exposureRate / 300, 1) * 100;
+      $('gauge-wrap').style.display = 'block';
+      $('gauge-needle').style.left  = needlePct + '%';
+
+      // Scenario
+      $('scenario-card').style.display = 'block';
+      fillScenario('s10', 0.10, totalStockExp, netAssets);
+      fillScenario('s20', 0.20, totalStockExp, netAssets);
+      fillScenario('s30', 0.30, totalStockExp, netAssets);
+
+      const breakEven = (netAssets / totalStockExp) * 100;
+      const beEl = $('breakeven-note');
+      if (breakEven <= 100) {
+        beEl.innerHTML = `市場跌 <strong>${fmt(breakEven, 1)}%</strong> 即淨資產歸零`;
+      } else {
+        beEl.textContent = '市場需跌超過 100% 淨資產才歸零（目前曝險率低於 100%）';
+      }
+    }
+
+    // ── Bind inputs ──
+    ['spot-value','margin-val','margin-loan','pledge-val','pledge-loan','credit-loan','cash','monthly-income','monthly-payment'].forEach(id => {
+      $(id).addEventListener('input', calculate);
+    });
+
+    // ── localStorage save / load / clear ──
+    const STORAGE_KEY = 'exposure-calc-v1';
+
+    function saveData() {
+      const etfRows = [];
+      $('etf-rows').querySelectorAll('.etf-row').forEach(row => {
+        const rid = row.id.match(/etf-row-(\d+)/)?.[1];
+        if (!rid) return;
+        etfRows.push({
+          val: $(`etf-val-${rid}`).value,
+          lev: $(`etf-lev-${rid}`).value,
+        });
+      });
+
+      const data = {
+        spotValue:  $('spot-value').value,
+        marginVal:  $('margin-val').value,
+        marginLoan: $('margin-loan').value,
+        pledgeVal:  $('pledge-val').value,
+        pledgeLoan: $('pledge-loan').value,
+        creditLoan:    $('credit-loan').value,
+        cash:          $('cash').value,
+        monthlyIncome:  $('monthly-income').value,
+        monthlyPayment: $('monthly-payment').value,
+        etfRows,
+        savedAt: new Date().toISOString(),
+      };
+
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      showSavedAt(data.savedAt);
+
+      const btn = $('btn-save');
+      btn.textContent = '✓ 已儲存';
+      btn.classList.add('saved');
+      setTimeout(() => {
+        btn.textContent = '儲存部位';
+        btn.classList.remove('saved');
+      }, 1800);
+    }
+
+    function loadData() {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      let data;
+      try { data = JSON.parse(raw); } catch { return; }
+
+      $('spot-value').value  = data.spotValue  || '';
+      $('margin-val').value  = data.marginVal  || '';
+      $('margin-loan').value = data.marginLoan || '';
+      $('pledge-val').value  = data.pledgeVal  || '';
+      $('pledge-loan').value = data.pledgeLoan || '';
+      $('credit-loan').value    = data.creditLoan    || '';
+      $('cash').value           = data.cash          || '';
+      $('monthly-income').value  = data.monthlyIncome  || '';
+      $('monthly-payment').value = data.monthlyPayment || '';
+
+      // restore ETF rows — pass val directly into addEtfRow to avoid post-hoc assignment
+      $('etf-rows').innerHTML = '';
+      etfRowId = 0;
+      if (data.etfRows && data.etfRows.length > 0) {
+        data.etfRows.forEach(r => addEtfRow(r.lev || '2', r.val || ''));
+      } else {
+        addEtfRow('2');
+      }
+
+      showSavedAt(data.savedAt);
+      calculate();
+    }
+
+    function clearData() {
+      if (!localStorage.getItem(STORAGE_KEY)) return;
+      if (!confirm('確定要清除已儲存的部位資料？')) return;
+      localStorage.removeItem(STORAGE_KEY);
+      $('spot-value').value  = '';
+      $('margin-val').value  = '';
+      $('margin-loan').value = '';
+      $('pledge-val').value  = '';
+      $('pledge-loan').value = '';
+      $('credit-loan').value    = '';
+      $('cash').value           = '';
+      $('monthly-income').value  = '';
+      $('monthly-payment').value = '';
+      $('etf-rows').innerHTML = '';
+      etfRowId = 0;
+      addEtfRow('2');
+      const at = $('saved-at');
+      at.textContent = '已清除';
+      at.className = 'saved-at';
+      calculate();
+    }
+
+    function showSavedAt(iso) {
+      if (!iso) return;
+      const d = new Date(iso);
+      const pad = n => String(n).padStart(2, '0');
+      const label = `${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())} `
+                  + `${pad(d.getHours())}:${pad(d.getMinutes())} 儲存`;
+      const at = $('saved-at');
+      at.textContent = label;
+      at.className = 'saved-at has-data';
+    }
+
+    // ── Init ──
+    loadData();   // loads saved data; falls back to addEtfRow inside if nothing saved
+    if ($('etf-rows').children.length === 0) addEtfRow('2');
+    calculate();
+  </script>
+</body>
+</html>
