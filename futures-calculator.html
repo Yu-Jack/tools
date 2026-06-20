@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>期貨保證金計算機 — Yu-Jack's Tools</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;600;700&family=Noto+Sans+TC:wght@300;400;500&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:           #F5EFE6;
+      --bg-alt:       #EDE5D8;
+      --paper:        #FAF6F0;
+      --ink:          #2C2418;
+      --ink-light:    #6B5E4E;
+      --sakura:       #C47C8A;
+      --sakura-pale:  rgba(196,124,138,0.12);
+      --gold:         #B8956A;
+      --gold-pale:    rgba(184,149,106,0.15);
+      --indigo:       #3D4E6B;
+      --indigo-pale:  rgba(61,78,107,0.12);
+      --border:       #D4C9BA;
+      --border-light: #E8E0D4;
+      --safe:         #5A8A6A;
+      --safe-bg:      rgba(90,138,106,0.10);
+      --warn:         #C8973A;
+      --warn-bg:      rgba(200,151,58,0.12);
+      --danger:       #C4662A;
+      --danger-bg:    rgba(196,102,42,0.12);
+      --critical:     #B03030;
+      --critical-bg:  rgba(176,48,48,0.12);
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background-color: var(--bg);
+      background-image:
+        radial-gradient(ellipse at 15% 60%, rgba(196,124,138,.07) 0%, transparent 50%),
+        radial-gradient(ellipse at 85% 15%, rgba(184,149,106,.09) 0%, transparent 45%),
+        radial-gradient(ellipse at 50% 90%, rgba(61,78,107,.05) 0%, transparent 40%);
+      min-height: 100vh;
+      font-family: 'Noto Sans TC', sans-serif;
+      color: var(--ink);
+      padding: 2.5rem 1rem 6rem;
+    }
+
+    .container { max-width: 880px; margin: 0 auto; }
+
+    .back {
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: .8rem;
+      letter-spacing: .1em;
+      color: var(--ink-light);
+      text-decoration: none;
+      margin-bottom: 2rem;
+      opacity: .7;
+      transition: opacity .18s;
+    }
+    .back:hover { opacity: 1; }
+    .back::before { content: '←'; font-style: normal; }
+
+    .header { text-align: center; margin-bottom: 2.8rem; animation: fadeDown .55s ease both; }
+    .header .eyebrow {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: .8rem;
+      letter-spacing: .42em;
+      color: var(--sakura);
+      margin-bottom: .5rem;
+      text-transform: uppercase;
+    }
+    .header h1 {
+      font-family: 'Shippori Mincho', serif;
+      font-size: 2.2rem;
+      font-weight: 600;
+      letter-spacing: .16em;
+      color: var(--ink);
+    }
+    .header .sub {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: .88rem;
+      color: var(--ink-light);
+      margin-top: .4rem;
+      letter-spacing: .06em;
+    }
+    .header .rule {
+      width: 72px; height: 1px;
+      background: linear-gradient(to right, transparent, var(--sakura), transparent);
+      margin: 1rem auto 0;
+    }
+
+    .card {
+      background: var(--paper);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      box-shadow: 0 2px 16px rgba(44,36,24,.06);
+      padding: 1.8rem;
+      margin-bottom: 1.4rem;
+      animation: fadeUp .45s ease both;
+    }
+    .card:nth-child(1) { animation-delay: .05s; }
+    .card:nth-child(2) { animation-delay: .12s; }
+    .card:nth-child(3) { animation-delay: .19s; }
+    .card:nth-child(4) { animation-delay: .26s; }
+
+    .card-title {
+      font-family: 'Shippori Mincho', serif;
+      font-size: .78rem;
+      font-weight: 600;
+      letter-spacing: .28em;
+      color: var(--ink-light);
+      text-transform: uppercase;
+      margin-bottom: 1.2rem;
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+    }
+    .card-title::after { content: ''; flex: 1; height: 1px; background: var(--border-light); }
+
+    /* ── Type toggle: 5 buttons ── */
+    .type-toggle {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: .5rem;
+      margin-bottom: 1.2rem;
+    }
+    @media (max-width: 640px) { .type-toggle { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 380px) { .type-toggle { grid-template-columns: repeat(2, 1fr); } }
+
+    .type-btn {
+      background: var(--bg-alt);
+      border: 1.5px solid var(--border);
+      border-radius: 3px;
+      padding: .75rem .55rem;
+      cursor: pointer;
+      text-align: center;
+      transition: border-color .18s, background .18s, box-shadow .18s;
+      font-family: inherit;
+      color: var(--ink);
+    }
+    .type-btn:hover { border-color: rgba(196,124,138,.5); background: var(--paper); }
+    .type-btn.active {
+      border-color: var(--sakura);
+      background: var(--paper);
+      box-shadow: 0 0 0 3px var(--sakura-pale);
+    }
+    .type-btn .type-ticker {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .65rem;
+      letter-spacing: .1em;
+      color: var(--ink-light);
+      margin-bottom: .18rem;
+    }
+    .type-btn.active .type-ticker { color: var(--sakura); }
+    .type-btn .type-name {
+      font-family: 'Shippori Mincho', serif;
+      font-size: .88rem;
+      font-weight: 600;
+      letter-spacing: .04em;
+      color: var(--ink);
+      line-height: 1.2;
+    }
+    .type-btn .type-mult {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .7rem;
+      color: var(--ink-light);
+      margin-top: .18rem;
+    }
+    .type-btn.active .type-mult { color: var(--gold); }
+
+    /* ── Contract info banner ── */
+    .contract-banner {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+      background: var(--indigo-pale);
+      border: 1px solid rgba(61,78,107,.2);
+      border-radius: 2px;
+      padding: .65rem 1rem;
+      margin-bottom: 1.2rem;
+      font-size: .78rem;
+      color: var(--indigo);
+    }
+    .banner-item strong { font-family: 'JetBrains Mono', monospace; font-size: .88rem; }
+    .banner-sep { color: var(--border); }
+
+    /* ── Margin hint (for stock futures) ── */
+    .margin-hint {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: .73rem;
+      color: var(--gold);
+      margin-top: .18rem;
+      letter-spacing: .03em;
+    }
+
+    /* ── Direction toggle ── */
+    .dir-row {
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      margin-bottom: 1.2rem;
+    }
+    .dir-label-text {
+      font-size: .72rem;
+      letter-spacing: .1em;
+      color: var(--ink-light);
+      font-weight: 500;
+      white-space: nowrap;
+    }
+    .dir-pills { display: flex; gap: .4rem; }
+    .dir-pill {
+      padding: .28rem .8rem;
+      border-radius: 2px;
+      border: 1px solid var(--border);
+      background: var(--bg-alt);
+      font-size: .75rem;
+      font-weight: 500;
+      letter-spacing: .08em;
+      cursor: pointer;
+      transition: all .15s;
+      color: var(--ink-light);
+      font-family: inherit;
+    }
+    .dir-pill.active-long  { border-color: var(--safe);     background: var(--safe-bg);     color: var(--safe); }
+    .dir-pill.active-short { border-color: var(--critical);  background: var(--critical-bg); color: var(--critical); }
+
+    /* ── Input grid ── */
+    .input-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem 1.4rem;
+    }
+    @media (max-width: 520px) { .input-grid { grid-template-columns: 1fr; } }
+
+    .field { display: flex; flex-direction: column; gap: .38rem; }
+    .field label {
+      font-size: .72rem;
+      letter-spacing: .1em;
+      color: var(--ink-light);
+      font-weight: 500;
+    }
+    .field label span {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: .78rem;
+      color: var(--sakura);
+      margin-left: .3rem;
+      letter-spacing: .04em;
+    }
+    .field input[type="number"] {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: .55rem .75rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .95rem;
+      color: var(--ink);
+      outline: none;
+      transition: border-color .18s, box-shadow .18s;
+      -moz-appearance: textfield;
+    }
+    .field input[type="number"]::-webkit-inner-spin-button,
+    .field input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+    .field input[type="number"]:focus {
+      border-color: var(--sakura);
+      box-shadow: 0 0 0 3px var(--sakura-pale);
+    }
+    .field.full { grid-column: 1 / -1; }
+
+    .card-divider { height: 1px; background: var(--border-light); margin: 1.2rem 0; }
+
+    /* ── Metric rows ── */
+    .metric {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: .5rem 0;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .metric:last-child { border-bottom: none; }
+    .metric-label { font-size: .75rem; color: var(--ink-light); letter-spacing: .04em; flex-shrink: 0; }
+    .metric-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .95rem;
+      font-weight: 500;
+      color: var(--ink);
+      text-align: right;
+    }
+    .metric-value.hl-gold    { font-size: 1.1rem; color: var(--gold); }
+    .metric-value.hl-sakura  { font-size: 1.1rem; color: var(--sakura); }
+    .metric-value.hl-indigo  { font-size: 1.1rem; color: var(--indigo); }
+    .metric-value.hl-safe    { color: var(--safe); }
+    .metric-value.hl-critical { color: var(--critical); }
+
+    /* ── Leverage hero ── */
+    .leverage-block { text-align: center; padding: 1.2rem 0 .8rem; }
+    .leverage-label {
+      font-size: .68rem;
+      letter-spacing: .22em;
+      text-transform: uppercase;
+      color: var(--ink-light);
+      margin-bottom: .35rem;
+    }
+    .leverage-value {
+      font-family: 'Shippori Mincho', serif;
+      font-size: 3.2rem;
+      font-weight: 700;
+      letter-spacing: .04em;
+      line-height: 1;
+      color: var(--sakura);
+      transition: color .3s;
+    }
+    .leverage-sub {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: .82rem;
+      color: var(--ink-light);
+      margin-top: .3rem;
+    }
+    .placeholder { color: var(--border); font-style: italic; font-family: 'Cormorant Garamond', serif; font-size: .88rem; }
+
+    /* ── Two-col results ── */
+    .results-split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.2rem;
+      margin-bottom: 1.4rem;
+    }
+    @media (max-width: 580px) { .results-split { grid-template-columns: 1fr; } }
+    .results-split > .card { margin-bottom: 0; }
+    .results-split > .card:nth-child(1) { animation-delay: .19s; }
+    .results-split > .card:nth-child(2) { animation-delay: .26s; }
+
+    /* ── Margin status bar ── */
+    .margin-status { margin-top: 1rem; padding-top: 1rem; border-top: 1px dashed var(--border); }
+    .ms-label { font-size: .7rem; letter-spacing: .1em; color: var(--ink-light); margin-bottom: .4rem; }
+    .ms-bar-track {
+      height: 6px; border-radius: 3px;
+      background: linear-gradient(to right, var(--critical) 0%, var(--warn) 50%, var(--safe) 100%);
+      position: relative;
+      margin-bottom: .35rem;
+    }
+    .ms-bar-needle {
+      position: absolute;
+      top: 50%; transform: translate(-50%, -50%);
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      background: var(--ink);
+      border: 2px solid var(--paper);
+      box-shadow: 0 1px 4px rgba(44,36,24,.3);
+      transition: left .4s cubic-bezier(.34,1.56,.64,1);
+    }
+    .ms-bar-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: .6rem;
+      color: var(--ink-light);
+      letter-spacing: .04em;
+    }
+
+    /* ── Threshold cards ── */
+    .threshold-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+    @media (max-width: 480px) { .threshold-grid { grid-template-columns: 1fr; } }
+
+    .threshold-card { border-radius: 2px; padding: 1.2rem 1.1rem; border: 1px solid; }
+    .threshold-card.t-warn     { background: var(--warn-bg);     border-color: rgba(200,151,58,.28); }
+    .threshold-card.t-critical { background: var(--critical-bg); border-color: rgba(176,48,48,.28); }
+
+    .threshold-name {
+      font-size: .66rem; font-weight: 500;
+      letter-spacing: .16em; text-transform: uppercase;
+      margin-bottom: .1rem;
+    }
+    .threshold-desc { font-family: 'Cormorant Garamond', serif; font-size: .78rem; margin-bottom: .7rem; opacity: .75; }
+    .t-warn .threshold-name,    .t-warn .threshold-desc    { color: var(--warn); }
+    .t-critical .threshold-name,.t-critical .threshold-desc { color: var(--critical); }
+
+    .threshold-price {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.45rem; font-weight: 500;
+      color: var(--ink); letter-spacing: .02em;
+    }
+    .threshold-drop {
+      font-size: .73rem; color: var(--ink-light);
+      margin-top: .25rem; letter-spacing: .03em; line-height: 1.5;
+    }
+    .threshold-drop strong { font-family: 'JetBrains Mono', monospace; font-weight: 500; }
+
+    .margin-lookup-link {
+      display: inline-flex;
+      align-items: center;
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: .82rem;
+      letter-spacing: .08em;
+      color: var(--indigo);
+      text-decoration: none;
+      border: 1px solid rgba(61,78,107,.25);
+      border-radius: 2px;
+      padding: .28rem .75rem;
+      background: var(--indigo-pale);
+      transition: border-color .18s, background .18s, color .18s;
+    }
+    .margin-lookup-link:hover {
+      border-color: var(--indigo);
+      background: rgba(61,78,107,.18);
+      color: var(--ink);
+    }
+
+    .note {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: .75rem;
+      color: var(--ink-light);
+      letter-spacing: .06em;
+      text-align: center;
+      margin-top: 2rem;
+      opacity: .65;
+      line-height: 1.8;
+    }
+
+    @keyframes fadeDown { from { opacity: 0; transform: translateY(-14px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeUp   { from { opacity: 0; transform: translateY(12px);  } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <a class="back" href="index.html"> 返回工具集</a>
+
+    <header class="header">
+      <p class="eyebrow">Futures Margin</p>
+      <h1>期貨保證金計算機</h1>
+      <p class="sub">Taiwan Futures Leverage & Margin Calculator</p>
+      <div class="rule"></div>
+    </header>
+
+    <!-- ── 合約設定 ── -->
+    <div class="card">
+      <div class="card-title">合約設定</div>
+
+      <div class="type-toggle">
+        <button class="type-btn active" id="btn-TX" onclick="selectType('TX')">
+          <div class="type-ticker">TX</div>
+          <div class="type-name">大台指</div>
+          <div class="type-mult">×200 元/點</div>
+        </button>
+        <button class="type-btn" id="btn-MTX" onclick="selectType('MTX')">
+          <div class="type-ticker">MTX</div>
+          <div class="type-name">小台指</div>
+          <div class="type-mult">×50 元/點</div>
+        </button>
+        <button class="type-btn" id="btn-TMF" onclick="selectType('TMF')">
+          <div class="type-ticker">TMF</div>
+          <div class="type-name">微台指</div>
+          <div class="type-mult">×10 元/點</div>
+        </button>
+        <button class="type-btn" id="btn-STF" onclick="selectType('STF')">
+          <div class="type-ticker">個股期</div>
+          <div class="type-name">個股期貨</div>
+          <div class="type-mult">×2000 股</div>
+        </button>
+        <button class="type-btn" id="btn-MSTF" onclick="selectType('MSTF')">
+          <div class="type-ticker">小個股</div>
+          <div class="type-name">小型個股</div>
+          <div class="type-mult">×100 股</div>
+        </button>
+      </div>
+
+      <div class="contract-banner">
+        <span class="banner-item">契約乘數 <strong id="b-mult">200</strong> 元/<span id="b-unit">點</span></span>
+        <span class="banner-sep">｜</span>
+        <span class="banner-item">一口面值 <strong id="b-lotval">請輸入價位</strong></span>
+        <span class="banner-sep">｜</span>
+        <span class="banner-item">每<span id="b-unit2">點</span>損益 <strong id="b-pnl-pt">—</strong></span>
+      </div>
+
+      <div class="dir-row">
+        <span class="dir-label-text">交易方向</span>
+        <div class="dir-pills">
+          <button class="dir-pill active-long"  id="pill-long"  onclick="selectDir('long')">多單 Long</button>
+          <button class="dir-pill"              id="pill-short" onclick="selectDir('short')">空單 Short</button>
+        </div>
+      </div>
+
+      <div class="input-grid">
+        <div class="field">
+          <label id="label-entry">開倉指數<span id="label-entry-unit">點</span></label>
+          <input type="number" id="entry-price" placeholder="例：22000" min="0" step="0.01">
+        </div>
+        <div class="field">
+          <label>開倉口數<span>口</span></label>
+          <input type="number" id="contracts" placeholder="例：1" min="1" step="1">
+        </div>
+        <div class="field">
+          <label>每口原始保證金<span>元</span></label>
+          <input type="number" id="initial-margin" placeholder="184000" min="0" step="1">
+          <div class="margin-hint" id="hint-init"></div>
+        </div>
+        <div class="field">
+          <label>每口維持保證金<span>元</span></label>
+          <input type="number" id="maintenance-margin" placeholder="142000" min="0" step="1">
+          <div class="margin-hint" id="hint-maint"></div>
+        </div>
+        <div class="field full">
+          <a class="margin-lookup-link" href="https://www.yuantafutures.com.tw/margin_01/C" target="_blank" rel="noopener">
+            查詢元大期貨保證金表 ↗
+          </a>
+        </div>
+        <div class="field full">
+          <label>帳戶投入保證金<span>元（預計存入金額，需 ≥ 原始保證金合計）</span></label>
+          <input type="number" id="account-margin" placeholder="例：500000" min="0" step="1">
+        </div>
+        <div class="field full">
+          <label id="label-target">目標價格<span id="label-target-unit">點（計算目標損益）</span></label>
+          <input type="number" id="target-price" placeholder="例：23000" min="0" step="0.01">
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 合約摘要 + 槓桿 ── -->
+    <div class="results-split">
+
+      <div class="card">
+        <div class="card-title">合約摘要</div>
+        <div class="metric">
+          <span class="metric-label">契約乘數</span>
+          <span class="metric-value" id="r-mult">—</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">一口合約面值</span>
+          <span class="metric-value" id="r-lot-val">—</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">開倉口數</span>
+          <span class="metric-value" id="r-contracts">—</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">總合約面值</span>
+          <span class="metric-value hl-gold" id="r-total-val">—</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label" id="r-pnl-label">每漲/跌 1 點損益</span>
+          <span class="metric-value hl-indigo" id="r-pnl-pt">—</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">需用原始保證金合計</span>
+          <span class="metric-value" id="r-total-init">—</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">帳戶餘裕（超額準備）</span>
+          <span class="metric-value" id="r-excess">—</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">槓桿分析</div>
+        <div class="leverage-block">
+          <div class="leverage-label">有效槓桿倍數</div>
+          <div class="leverage-value" id="leverage-value">
+            <span class="placeholder">請輸入數據</span>
+          </div>
+          <div class="leverage-sub" id="leverage-sub"></div>
+        </div>
+
+        <div class="margin-status" id="margin-status" style="display:none">
+          <div class="ms-label">帳戶保證金充足度</div>
+          <div class="ms-bar-track">
+            <div class="ms-bar-needle" id="ms-needle"></div>
+          </div>
+          <div class="ms-bar-labels">
+            <span>不足</span>
+            <span>維持線</span>
+            <span>原始線</span>
+            <span>充裕</span>
+          </div>
+        </div>
+
+        <div class="card-divider"></div>
+        <div class="metric">
+          <span class="metric-label">維持保證金合計</span>
+          <span class="metric-value" id="r-total-maint">—</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">可承受最大損失</span>
+          <span class="metric-value hl-sakura" id="r-max-loss">—</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label" id="r-maxpts-label">可承受最大虧損點數</span>
+          <span class="metric-value" id="r-max-pts">—</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── 目標損益 ── -->
+    <div class="card" id="target-pnl-card" style="display:none">
+      <div class="card-title">目標損益分析</div>
+      <div class="metric">
+        <span class="metric-label" id="r-target-label">目標價格</span>
+        <span class="metric-value" id="r-target-price">—</span>
+      </div>
+      <div class="metric">
+        <span class="metric-label" id="r-target-move-label">價格移動</span>
+        <span class="metric-value" id="r-target-move">—</span>
+      </div>
+      <div class="metric">
+        <span class="metric-label">預估損益金額</span>
+        <span class="metric-value" id="r-target-pnl" style="font-size:1.2rem">—</span>
+      </div>
+      <div class="metric">
+        <span class="metric-label">損益 %（相對面值）</span>
+        <span class="metric-value" id="r-target-pct-val">—</span>
+      </div>
+      <div class="metric">
+        <span class="metric-label">損益 % （相對帳戶保證金 ROI）</span>
+        <span class="metric-value" id="r-target-pct-acct">—</span>
+      </div>
+    </div>
+
+    <!-- ── 風險閾值 ── -->
+    <div class="card">
+      <div class="card-title">風險閾值</div>
+      <div class="threshold-grid">
+
+        <div class="threshold-card t-warn">
+          <div class="threshold-name">催繳線</div>
+          <div class="threshold-desc">帳戶權益 = 維持保證金合計</div>
+          <div class="threshold-price" id="call-price">—</div>
+          <div class="threshold-drop" id="call-drop">輸入資料後顯示</div>
+        </div>
+
+        <div class="threshold-card t-critical">
+          <div class="threshold-name">斷頭線</div>
+          <div class="threshold-desc">帳戶保證金全部虧完</div>
+          <div class="threshold-price" id="cut-price">—</div>
+          <div class="threshold-drop" id="cut-drop">強制平倉</div>
+        </div>
+
+      </div>
+    </div>
+
+    <p class="note">
+      大台 TX：原始 184,000、維持 142,000。小台 MTX：原始 46,000、維持 35,500。微台 TMF：原始 9,200、維持 7,100（皆為預設估值）。<br>
+      個股期貨每口 = 2,000 股（2 張現股）；小型個股期貨每口 = 100 股（0.1 張）。個股期貨保證金因標的而異，請以 TAIFEX 官網公告為準。<br>
+      槓桿倍數 = 總合約面值 ÷ 帳戶投入保證金。催繳線為帳戶虧至維持保證金合計時的對應價位。<br>
+      本計算機僅供試算參考，不構成任何投資建議。
+    </p>
+
+  </div>
+
+  <script>
+    const $ = id => document.getElementById(id);
+
+    const TYPES = {
+      TX:   { mult: 200,  init: 184000, maint: 142000, fixed: true,  unit: '點', priceLabel: '開倉指數',  pricePH: '例：22000', step: 1,    dec: 0 },
+      MTX:  { mult: 50,   init: 46000,  maint: 35500,  fixed: true,  unit: '點', priceLabel: '開倉指數',  pricePH: '例：22000', step: 1,    dec: 0 },
+      TMF:  { mult: 10,   init: 9200,   maint: 7100,   fixed: true,  unit: '點', priceLabel: '開倉指數',  pricePH: '例：22000', step: 1,    dec: 0 },
+      STF:  { mult: 2000, init: null,   maint: null,   fixed: false, unit: '元', priceLabel: '股票股價',  pricePH: '例：100.5', step: 0.01, dec: 2,
+              initRate: 0.135, maintRate: 0.1035 },
+      MSTF: { mult: 100,  init: null,   maint: null,   fixed: false, unit: '元', priceLabel: '股票股價',  pricePH: '例：100.5', step: 0.01, dec: 2,
+              initRate: 0.135, maintRate: 0.1035 },
+    };
+
+    let currentType = 'TX';
+    let currentDir  = 'long';
+
+    function selectType(t) {
+      currentType = t;
+      Object.keys(TYPES).forEach(k => {
+        $('btn-' + k).classList.toggle('active', k === t);
+      });
+
+      const cfg = TYPES[t];
+
+      // Update price fields
+      $('label-entry').childNodes[0].textContent = cfg.priceLabel;
+      $('label-entry-unit').textContent = cfg.unit;
+      $('entry-price').placeholder = cfg.pricePH;
+      $('entry-price').step = cfg.step;
+      $('label-target').childNodes[0].textContent = cfg.unit === '點' ? '目標指數' : '目標股價';
+      $('label-target-unit').textContent = cfg.unit + '（計算目標損益）';
+      $('target-price').step = cfg.step;
+      $('target-price').value = '';
+
+      // Update banner units
+      $('b-unit').textContent  = cfg.unit;
+      $('b-unit2').textContent = cfg.unit;
+
+      // Update "每漲/跌 1 X 損益" label
+      $('r-pnl-label').textContent  = `每漲/跌 1 ${cfg.unit}損益`;
+      $('r-maxpts-label').textContent = cfg.unit === '點' ? '可承受最大虧損點數' : '可承受最大虧損幅度（元）';
+
+      // Margin fields
+      if (cfg.fixed) {
+        $('initial-margin').placeholder     = cfg.init.toLocaleString('zh-TW');
+        $('maintenance-margin').placeholder = cfg.maint.toLocaleString('zh-TW');
+        $('hint-init').textContent  = '';
+        $('hint-maint').textContent = '';
+      } else {
+        $('initial-margin').placeholder     = '請輸入或參考提示';
+        $('maintenance-margin').placeholder = '請輸入或參考提示';
+        $('hint-init').textContent  = '個股保證金因標的而異，請查詢 TAIFEX';
+        $('hint-maint').textContent = '維持保證金通常約為原始保證金 × 77%';
+      }
+
+      $('initial-margin').value     = '';
+      $('maintenance-margin').value = '';
+
+      calculate();
+    }
+
+    function selectDir(d) {
+      currentDir = d;
+      $('pill-long').className  = 'dir-pill' + (d === 'long'  ? ' active-long'  : '');
+      $('pill-short').className = 'dir-pill' + (d === 'short' ? ' active-short' : '');
+      calculate();
+    }
+
+    ['entry-price','contracts','initial-margin','maintenance-margin','account-margin','target-price'].forEach(id => {
+      $(id).addEventListener('input', calculate);
+    });
+
+    function fmt(n, dec = 0) {
+      if (n === null || n === undefined || !isFinite(n)) return '—';
+      return n.toLocaleString('zh-TW', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+    }
+
+    function getMargins(cfg, entry, lots) {
+      if (cfg.fixed) {
+        const initM  = parseFloat($('initial-margin').value)     || cfg.init;
+        const maintM = parseFloat($('maintenance-margin').value) || cfg.maint;
+        return { initM, maintM };
+      } else {
+        // For stock futures: user must input, but fall back to % estimate if entry known
+        const lotVal   = entry * cfg.mult;
+        const estInit  = entry > 0 ? Math.round(lotVal * cfg.initRate)  : 0;
+        const estMaint = entry > 0 ? Math.round(lotVal * cfg.maintRate) : 0;
+
+        const initM  = parseFloat($('initial-margin').value)     || estInit;
+        const maintM = parseFloat($('maintenance-margin').value) || estMaint;
+
+        // Update hints with estimates
+        if (entry > 0) {
+          $('hint-init').textContent  = `估值約 NT$ ${fmt(estInit)}（面值 × 13.5%，依標的調整）`;
+          $('hint-maint').textContent = `估值約 NT$ ${fmt(estMaint)}（面值 × 10.35%，依標的調整）`;
+        } else {
+          $('hint-init').textContent  = '個股保證金因標的而異，請查詢 TAIFEX';
+          $('hint-maint').textContent = '維持保證金通常約為原始保證金 × 77%';
+        }
+
+        return { initM, maintM };
+      }
+    }
+
+    function calculateTargetPnl(entry, lots, acctM, mult, cfg) {
+      const target = parseFloat($('target-price').value) || 0;
+      const card   = $('target-pnl-card');
+      if (!target || !entry || !lots) { card.style.display = 'none'; return; }
+
+      card.style.display = 'block';
+      const unit    = cfg.unit;
+      const sign    = currentDir === 'long' ? 1 : -1;
+      const pnl     = sign * (target - entry) * mult * lots;
+      const totalVal = entry * mult * lots;
+      const pctVal   = pnl / totalVal * 100;
+      const pctAcct  = acctM > 0 ? pnl / acctM * 100 : null;
+
+      const delta    = target - entry;
+      const deltaPct = delta / entry * 100;
+
+      const pnlEl = $('r-target-pnl');
+      const moveEl = $('r-target-move');
+
+      $('r-target-label').textContent = unit === '點' ? '目標指數' : '目標股價';
+      $('r-target-price').textContent = fmt(target, cfg.dec) + ' ' + unit;
+
+      const moveSign = delta >= 0 ? '+' : '';
+      moveEl.textContent = `${moveSign}${fmt(delta, cfg.dec)} ${unit}（${moveSign}${fmt(deltaPct, 2)}%）`;
+      moveEl.className   = 'metric-value ' + (delta >= 0 ? 'hl-safe' : 'hl-critical');
+
+      const pnlSign = pnl >= 0 ? '+' : '−';
+      pnlEl.textContent = `${pnl >= 0 ? '+' : ''}NT$ ${fmt(Math.abs(pnl))}`;
+      pnlEl.className   = 'metric-value ' + (pnl >= 0 ? 'hl-safe' : 'hl-critical');
+      pnlEl.style.fontSize = '1.2rem';
+
+      const pctValEl = $('r-target-pct-val');
+      pctValEl.textContent = `${pctVal >= 0 ? '+' : ''}${fmt(pctVal, 2)}%`;
+      pctValEl.className   = 'metric-value ' + (pctVal >= 0 ? 'hl-safe' : 'hl-critical');
+
+      const pctAcctEl = $('r-target-pct-acct');
+      if (pctAcct !== null) {
+        pctAcctEl.textContent = `${pctAcct >= 0 ? '+' : ''}${fmt(pctAcct, 2)}%`;
+        pctAcctEl.className   = 'metric-value ' + (pctAcct >= 0 ? 'hl-safe' : 'hl-critical');
+      } else {
+        pctAcctEl.textContent = '請輸入帳戶保證金';
+        pctAcctEl.className   = 'metric-value';
+      }
+    }
+
+    function calculate() {
+      const cfg  = TYPES[currentType];
+      const mult = cfg.mult;
+      const unit = cfg.unit;
+
+      const entry = parseFloat($('entry-price').value)   || 0;
+      const lots  = parseFloat($('contracts').value)     || 0;
+      const acctM = parseFloat($('account-margin').value) || 0;
+
+      const { initM, maintM } = getMargins(cfg, entry, lots);
+
+      // Banner
+      $('b-mult').textContent = fmt(mult);
+      if (entry > 0) {
+        const lotVal = entry * mult;
+        $('b-lotval').textContent = 'NT$ ' + fmt(lotVal, cfg.dec === 2 ? 0 : 0);
+      } else {
+        $('b-lotval').textContent = `請輸入${unit === '點' ? '指數' : '股價'}`;
+      }
+      if (entry > 0 && lots > 0) {
+        const pnlPt = mult * lots;
+        $('b-pnl-pt').textContent = 'NT$ ' + fmt(pnlPt) + `/${unit}`;
+        $('r-pnl-pt').textContent = 'NT$ ' + fmt(pnlPt) + ` /${unit}`;
+      } else {
+        $('b-pnl-pt').textContent = '—';
+        $('r-pnl-pt').textContent = '—';
+      }
+
+      // Summary
+      $('r-mult').textContent      = fmt(mult) + ` 元/${unit}`;
+      $('r-contracts').textContent = lots > 0 ? fmt(lots) + ' 口' : '—';
+
+      if (entry > 0 && lots > 0) {
+        const lotVal     = entry * mult;
+        const totalVal   = lotVal * lots;
+        const pnlPt      = mult * lots;
+        const totalInit  = initM * lots;
+        const totalMaint = maintM * lots;
+        const excess     = acctM > 0 ? acctM - totalInit : null;
+
+        $('r-lot-val').textContent    = 'NT$ ' + fmt(lotVal);
+        $('r-total-val').textContent  = 'NT$ ' + fmt(totalVal);
+        $('r-total-init').textContent = 'NT$ ' + fmt(totalInit);
+        $('r-total-maint').textContent = 'NT$ ' + fmt(totalMaint);
+
+        if (acctM > 0) {
+          // Excess margin
+          const exEl = $('r-excess');
+          if (excess >= 0) {
+            exEl.textContent = 'NT$ ' + fmt(excess);
+            exEl.className   = 'metric-value hl-safe';
+          } else {
+            exEl.textContent = '−NT$ ' + fmt(Math.abs(excess)) + '（不足）';
+            exEl.className   = 'metric-value hl-critical';
+          }
+
+          // Max loss before margin call
+          const maxLoss = acctM - totalMaint;
+          const maxPts  = maxLoss / pnlPt;
+          $('r-max-loss').textContent = maxLoss > 0 ? 'NT$ ' + fmt(maxLoss) : '已低於維持保證金';
+          $('r-max-pts').textContent  = maxPts  > 0 ? fmt(maxPts, unit === '元' ? 2 : 1) + ` ${unit}` : '—';
+
+          // Leverage
+          const lev = totalVal / acctM;
+          const levEl = $('leverage-value');
+          levEl.innerHTML = '';
+          levEl.textContent = fmt(lev, 1) + '×';
+          levEl.style.color = lev >= 20 ? 'var(--critical)' : lev >= 10 ? 'var(--warn)' : 'var(--sakura)';
+          $('leverage-sub').textContent = `總面值 ${fmt(totalVal)} ÷ 帳戶 ${fmt(acctM)}`;
+
+          // Status bar
+          const pct = Math.min(Math.max((acctM / totalInit) / 2, 0), 1) * 100;
+          $('margin-status').style.display = 'block';
+          $('ms-needle').style.left = pct + '%';
+
+          // Thresholds
+          // Long: margin call when price drops so that: acctM + (callPrice - entry)*pnlPt = totalMaint
+          //   → callPrice = entry + (totalMaint - acctM) / pnlPt
+          // Short: margin call when price rises
+          const sign      = currentDir === 'long' ? 1 : -1;
+          const callPrice = entry + sign * (totalMaint - acctM) / pnlPt;
+          const cutPrice  = entry - sign * acctM / pnlPt;
+
+          const callDelta = Math.abs(callPrice - entry);
+          const callPct   = callDelta / entry * 100;
+          const cutDelta  = Math.abs(cutPrice - entry);
+          const cutPct    = cutDelta / entry * 100;
+
+          const priceUnit = unit === '點' ? '點' : '元';
+          $('call-price').textContent = fmt(callPrice, cfg.dec) + ' ' + priceUnit;
+          $('cut-price').textContent  = fmt(cutPrice,  cfg.dec) + ' ' + priceUnit;
+
+          const moveWord = currentDir === 'long' ? '跌' : '漲';
+
+          const callMoved = currentDir === 'long' ? callPrice < entry : callPrice > entry;
+          if (callMoved) {
+            $('call-drop').innerHTML =
+              `再${moveWord} <strong>${fmt(callDelta, cfg.dec)}</strong> ${priceUnit}（${fmt(callPct, 2)}%）觸發催繳`;
+          } else {
+            $('call-drop').innerHTML = `<strong>帳戶已低於維持保證金，須補繳</strong>`;
+          }
+
+          const cutMoved = currentDir === 'long' ? cutPrice < entry : cutPrice > entry;
+          if (cutMoved) {
+            $('cut-drop').innerHTML =
+              `再${moveWord} <strong>${fmt(cutDelta, cfg.dec)}</strong> ${priceUnit}（${fmt(cutPct, 2)}%）保證金歸零`;
+          } else {
+            $('cut-drop').innerHTML = `<strong>保證金已耗盡</strong>`;
+          }
+
+        } else {
+          resetAccountFields();
+        }
+        calculateTargetPnl(entry, lots, acctM, mult, cfg);
+      } else {
+        $('target-pnl-card').style.display = 'none';
+        resetAll();
+      }
+    }
+
+    function resetAccountFields() {
+      $('r-excess').textContent        = '—';
+      $('r-excess').className          = 'metric-value';
+      $('r-max-loss').textContent      = '—';
+      $('r-max-pts').textContent       = '—';
+      $('r-total-maint').textContent   = '—';
+      $('leverage-value').innerHTML    = '<span class="placeholder">請輸入帳戶保證金</span>';
+      $('leverage-value').style.color  = '';
+      $('leverage-sub').textContent    = '';
+      $('margin-status').style.display = 'none';
+      $('call-price').textContent = '—';
+      $('call-drop').textContent  = '輸入帳戶保證金後顯示';
+      $('cut-price').textContent  = '—';
+      $('cut-drop').textContent   = '強制平倉';
+    }
+
+    function resetAll() {
+      const cfg = TYPES[currentType];
+      $('r-mult').textContent       = fmt(cfg.mult) + ` 元/${cfg.unit}`;
+      $('r-lot-val').textContent    = '—';
+      $('r-contracts').textContent  = '—';
+      $('r-total-val').textContent  = '—';
+      $('r-pnl-pt').textContent     = '—';
+      $('r-total-init').textContent = '—';
+      $('b-pnl-pt').textContent     = '—';
+      $('b-lotval').textContent     = `請輸入${cfg.unit === '點' ? '指數' : '股價'}`;
+      resetAccountFields();
+    }
+
+    selectType('TX');
+    calculate();
+  </script>
+</body>
+</html>
