@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>期貨槓桿率計算機 — Yu-Jack's Tools</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;600;700&family=Noto+Sans+TC:wght@300;400;500&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:           #F5EFE6;
+      --bg-alt:       #EDE5D8;
+      --paper:        #FAF6F0;
+      --ink:          #2C2418;
+      --ink-light:    #6B5E4E;
+      --sakura:       #C47C8A;
+      --sakura-pale:  rgba(196,124,138,0.12);
+      --gold:         #B8956A;
+      --gold-pale:    rgba(184,149,106,0.15);
+      --indigo:       #3D4E6B;
+      --indigo-pale:  rgba(61,78,107,0.12);
+      --border:       #D4C9BA;
+      --border-light: #E8E0D4;
+      --safe:         #5A8A6A;
+      --safe-bg:      rgba(90,138,106,0.10);
+      --warn:         #C8973A;
+      --warn-bg:      rgba(200,151,58,0.12);
+      --danger:       #C4662A;
+      --danger-bg:    rgba(196,102,42,0.12);
+      --critical:     #B03030;
+      --critical-bg:  rgba(176,48,48,0.12);
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background-color: var(--bg);
+      background-image:
+        radial-gradient(ellipse at 15% 60%, rgba(196,124,138,.07) 0%, transparent 50%),
+        radial-gradient(ellipse at 85% 15%, rgba(184,149,106,.09) 0%, transparent 45%),
+        radial-gradient(ellipse at 50% 90%, rgba(61,78,107,.05) 0%, transparent 40%);
+      min-height: 100vh;
+      font-family: 'Noto Sans TC', sans-serif;
+      color: var(--ink);
+      padding: 2.5rem 1rem 6rem;
+    }
+
+    .container { max-width: 900px; margin: 0 auto; }
+
+    .back {
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: .8rem;
+      letter-spacing: .1em;
+      color: var(--ink-light);
+      text-decoration: none;
+      margin-bottom: 2rem;
+      opacity: .7;
+      transition: opacity .18s;
+    }
+    .back:hover { opacity: 1; }
+    .back::before { content: '←'; font-style: normal; }
+
+    .header { text-align: center; margin-bottom: 2.8rem; animation: fadeDown .55s ease both; }
+    .header .eyebrow {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: .8rem;
+      letter-spacing: .42em;
+      color: var(--sakura);
+      margin-bottom: .5rem;
+      text-transform: uppercase;
+    }
+    .header h1 {
+      font-family: 'Shippori Mincho', serif;
+      font-size: 2.2rem;
+      font-weight: 600;
+      letter-spacing: .16em;
+      color: var(--ink);
+    }
+    .header .sub {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: .88rem;
+      color: var(--ink-light);
+      margin-top: .4rem;
+      letter-spacing: .06em;
+    }
+    .header .rule {
+      width: 72px; height: 1px;
+      background: linear-gradient(to right, transparent, var(--sakura), transparent);
+      margin: 1rem auto 0;
+    }
+
+    /* ── Card ── */
+    .card {
+      background: var(--paper);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      box-shadow: 0 2px 16px rgba(44,36,24,.06);
+      padding: 1.8rem;
+      margin-bottom: 1.4rem;
+      animation: fadeUp .45s ease both;
+    }
+
+    .card-title {
+      font-family: 'Shippori Mincho', serif;
+      font-size: .78rem;
+      font-weight: 600;
+      letter-spacing: .28em;
+      color: var(--ink-light);
+      text-transform: uppercase;
+      margin-bottom: 1.2rem;
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+    }
+    .card-title::after { content: ''; flex: 1; height: 1px; background: var(--border-light); }
+
+    .card-divider { height: 1px; background: var(--border-light); margin: 1rem 0; }
+
+    /* ── Field ── */
+    .field { display: flex; flex-direction: column; gap: .38rem; }
+    .field label {
+      font-size: .72rem;
+      letter-spacing: .1em;
+      color: var(--ink-light);
+      font-weight: 500;
+    }
+    .field label span {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: .78rem;
+      color: var(--sakura);
+      margin-left: .3rem;
+    }
+    .field input[type="number"] {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: .55rem .75rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .95rem;
+      color: var(--ink);
+      outline: none;
+      transition: border-color .18s, box-shadow .18s;
+      -moz-appearance: textfield;
+    }
+    .field input[type="number"]::-webkit-inner-spin-button,
+    .field input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+    .field input[type="number"]:focus {
+      border-color: var(--sakura);
+      box-shadow: 0 0 0 3px var(--sakura-pale);
+    }
+
+    /* ── Position table ── */
+    .pos-header {
+      display: grid;
+      grid-template-columns: 112px 1fr 130px 86px 140px 36px;
+      gap: .5rem;
+      padding: 0 0 .55rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: .1rem;
+    }
+    @media (max-width: 700px) { .pos-header { display: none; } }
+
+    .pos-header-cell {
+      font-size: .63rem;
+      font-weight: 500;
+      letter-spacing: .16em;
+      color: var(--ink-light);
+      text-transform: uppercase;
+    }
+    .pos-header-cell.right { text-align: right; }
+
+    /* ── Position row ── */
+    .pos-row {
+      display: grid;
+      grid-template-columns: 112px 1fr 130px 86px 140px 36px;
+      gap: .5rem;
+      align-items: center;
+      padding: .5rem 0;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .pos-row:last-child { border-bottom: none; }
+
+    @media (max-width: 700px) {
+      .pos-row {
+        grid-template-columns: 1fr 1fr;
+        gap: .45rem;
+        padding: .9rem 0;
+        border-bottom: 1px dashed var(--border);
+      }
+      .pos-row .pos-type  { grid-column: 1 / 3; }
+      .pos-row .pos-name  { grid-column: 1 / 3; }
+      .pos-row .pos-price { grid-column: 1; }
+      .pos-row .pos-qty   { grid-column: 2; }
+      .pos-row .pos-val   { grid-column: 1; display: flex; align-items: center; }
+      .pos-row .pos-del   { grid-column: 2; display: flex; justify-content: flex-end; align-items: center; }
+    }
+
+    .pos-input {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: .4rem .55rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .88rem;
+      color: var(--ink);
+      outline: none;
+      transition: border-color .15s, box-shadow .15s;
+      -moz-appearance: textfield;
+    }
+    .pos-input[type="text"] { font-family: 'Noto Sans TC', sans-serif; font-size: .85rem; }
+    .pos-input::-webkit-inner-spin-button,
+    .pos-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+    .pos-input:focus {
+      border-color: var(--sakura);
+      box-shadow: 0 0 0 2px var(--sakura-pale);
+    }
+
+    .pos-select {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: .4rem .5rem;
+      padding-right: 1.6rem;
+      font-family: 'Noto Sans TC', sans-serif;
+      font-size: .82rem;
+      color: var(--ink);
+      outline: none;
+      cursor: pointer;
+      transition: border-color .15s;
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236B5E4E'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right .5rem center;
+    }
+    .pos-select:focus { border-color: var(--sakura); }
+
+    .pos-val-display {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .85rem;
+      color: var(--indigo);
+      font-weight: 500;
+      text-align: right;
+      white-space: nowrap;
+    }
+    .pos-val-display.zero { color: var(--border); font-style: italic; font-family: 'Cormorant Garamond', serif; font-size: .8rem; }
+
+    .pos-del-btn {
+      width: 32px; height: 32px;
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      cursor: pointer;
+      color: var(--ink-light);
+      font-size: .8rem;
+      display: flex; align-items: center; justify-content: center;
+      transition: border-color .15s, color .15s, background .15s;
+      flex-shrink: 0;
+    }
+    .pos-del-btn:hover {
+      border-color: var(--critical);
+      color: var(--critical);
+      background: var(--critical-bg);
+    }
+
+    .pos-mobile-label {
+      display: none;
+      font-size: .62rem;
+      letter-spacing: .12em;
+      color: var(--ink-light);
+      margin-bottom: .22rem;
+      text-transform: uppercase;
+    }
+    @media (max-width: 700px) { .pos-mobile-label { display: block; } }
+
+    .add-row-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: .4rem;
+      background: none;
+      border: 1px dashed var(--border);
+      border-radius: 2px;
+      padding: .55rem 1rem;
+      margin-top: .9rem;
+      cursor: pointer;
+      font-family: 'Noto Sans TC', sans-serif;
+      font-size: .78rem;
+      color: var(--ink-light);
+      letter-spacing: .06em;
+      width: 100%;
+      transition: border-color .18s, color .18s, background .18s;
+    }
+    .add-row-btn:hover {
+      border-color: var(--sakura);
+      color: var(--sakura);
+      background: var(--sakura-pale);
+    }
+
+    /* ── Action row ── */
+    .action-row {
+      display: flex;
+      gap: .7rem;
+      margin-bottom: 1.4rem;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: .6rem 1.3rem;
+      border-radius: 2px;
+      border: 1px solid;
+      font-family: 'Noto Sans TC', sans-serif;
+      font-size: .8rem;
+      font-weight: 500;
+      letter-spacing: .08em;
+      cursor: pointer;
+      transition: all .18s;
+    }
+    .btn-save {
+      background: var(--indigo-pale);
+      border-color: rgba(61,78,107,.3);
+      color: var(--indigo);
+    }
+    .btn-save:hover {
+      background: rgba(61,78,107,.2);
+      border-color: var(--indigo);
+    }
+    .btn-clear {
+      background: none;
+      border-color: var(--border);
+      color: var(--ink-light);
+    }
+    .btn-clear:hover {
+      border-color: var(--critical);
+      color: var(--critical);
+      background: var(--critical-bg);
+    }
+
+    /* ── Metric ── */
+    .metric {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: .5rem 0;
+      border-bottom: 1px solid var(--border-light);
+      gap: .6rem;
+    }
+    .metric:last-child { border-bottom: none; }
+    .metric-label {
+      font-size: .75rem;
+      color: var(--ink-light);
+      letter-spacing: .03em;
+      line-height: 1.55;
+      flex-shrink: 0;
+    }
+    .metric-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .95rem;
+      font-weight: 500;
+      color: var(--ink);
+      text-align: right;
+      white-space: nowrap;
+    }
+    .metric-value.hl-gold   { color: var(--gold); font-size: 1.05rem; }
+    .metric-value.hl-indigo { color: var(--indigo); }
+    .metric-value.hl-sakura { color: var(--sakura); }
+    .metric-value.hl-safe   { color: var(--safe); }
+
+    .type-chip {
+      display: inline-block;
+      font-size: .6rem;
+      font-weight: 500;
+      letter-spacing: .08em;
+      padding: .08rem .38rem;
+      border-radius: 2px;
+      background: var(--indigo-pale);
+      color: var(--indigo);
+      margin-right: .35rem;
+      font-family: 'JetBrains Mono', monospace;
+      vertical-align: middle;
+    }
+
+    /* ── Results grid ── */
+    .results-split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.2rem;
+      margin-bottom: 1.4rem;
+    }
+    @media (max-width: 580px) { .results-split { grid-template-columns: 1fr; } }
+    .results-split > .card { margin-bottom: 0; }
+
+    /* ── Leverage hero ── */
+    .leverage-block { text-align: center; padding: 1.2rem 0 .8rem; }
+    .leverage-label {
+      font-size: .68rem;
+      letter-spacing: .22em;
+      text-transform: uppercase;
+      color: var(--ink-light);
+      margin-bottom: .4rem;
+    }
+    .leverage-value {
+      font-family: 'Shippori Mincho', serif;
+      font-size: 3.8rem;
+      font-weight: 700;
+      letter-spacing: .04em;
+      line-height: 1;
+      transition: color .35s;
+    }
+    .leverage-sub {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: .9rem;
+      color: var(--ink-light);
+      margin-top: .4rem;
+      min-height: 1.2em;
+    }
+
+    .lev-safe     { color: var(--safe); }
+    .lev-moderate { color: var(--gold); }
+    .lev-warn     { color: var(--warn); }
+    .lev-high     { color: var(--danger); }
+    .lev-critical { color: var(--critical); }
+    .lev-empty    { color: var(--border); }
+
+    /* ── Leverage bar ── */
+    .lev-bar-wrap { margin: 1.2rem 0 .2rem; }
+    .lev-bar-track {
+      height: 7px;
+      border-radius: 4px;
+      background: linear-gradient(to right,
+        var(--safe)     0%,
+        var(--safe)     18%,
+        var(--gold)     32%,
+        var(--warn)     55%,
+        var(--danger)   72%,
+        var(--critical) 100%
+      );
+      position: relative;
+    }
+    .lev-bar-needle {
+      position: absolute;
+      top: 50%; transform: translate(-50%, -50%);
+      width: 13px; height: 13px;
+      border-radius: 50%;
+      background: var(--ink);
+      border: 2px solid var(--paper);
+      box-shadow: 0 1px 5px rgba(44,36,24,.3);
+      transition: left .5s cubic-bezier(.34,1.56,.64,1);
+    }
+    .lev-bar-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-top: .42rem;
+      font-size: .6rem;
+      color: var(--ink-light);
+      letter-spacing: .04em;
+    }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--ink);
+      color: #F5EFE6;
+      font-size: .8rem;
+      letter-spacing: .08em;
+      padding: .55rem 1.5rem;
+      border-radius: 2px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .25s;
+      z-index: 100;
+      white-space: nowrap;
+    }
+    .toast.show { opacity: 1; }
+
+    .note {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: .75rem;
+      color: var(--ink-light);
+      letter-spacing: .06em;
+      text-align: center;
+      margin-top: 2rem;
+      opacity: .65;
+      line-height: 1.85;
+    }
+
+    @keyframes fadeDown { from { opacity: 0; transform: translateY(-14px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeUp   { from { opacity: 0; transform: translateY(12px);  } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <a class="back" href="index.html"> 返回工具集</a>
+
+    <header class="header">
+      <p class="eyebrow">Futures Leverage</p>
+      <h1>期貨槓桿率計算機</h1>
+      <p class="sub">Portfolio Exposure &amp; Leverage Ratio Calculator</p>
+      <div class="rule"></div>
+    </header>
+
+    <!-- ── 持倉清單 ── -->
+    <div class="card" style="animation-delay:.05s">
+      <div class="card-title">持倉清單</div>
+
+      <div class="pos-header">
+        <div class="pos-header-cell">類型</div>
+        <div class="pos-header-cell">名稱</div>
+        <div class="pos-header-cell right">均價 / 指數</div>
+        <div class="pos-header-cell right">口數</div>
+        <div class="pos-header-cell right">契約面值</div>
+        <div class="pos-header-cell"></div>
+      </div>
+
+      <div id="pos-list"></div>
+
+      <button class="add-row-btn" onclick="addRow()">＋ 新增持倉</button>
+    </div>
+
+    <!-- ── 帳戶資訊 ── -->
+    <div class="card" style="animation-delay:.12s">
+      <div class="card-title">帳戶資訊</div>
+      <div class="field">
+        <label>權益總值 <span>元</span></label>
+        <input type="number" id="equity" placeholder="例：581900" min="0" step="1" oninput="calculate()">
+      </div>
+    </div>
+
+    <!-- ── 操作列 ── -->
+    <div class="action-row">
+      <button class="btn btn-save" onclick="saveData()">儲存</button>
+      <button class="btn btn-clear" onclick="clearData()">清除</button>
+    </div>
+
+    <!-- ── 計算結果 ── -->
+    <div id="results-section" style="display:none">
+
+      <div class="results-split">
+
+        <!-- 持倉明細 -->
+        <div class="card" style="animation-delay:.19s">
+          <div class="card-title">持倉明細</div>
+          <div id="pos-breakdown"></div>
+          <div class="card-divider"></div>
+          <div class="metric">
+            <span class="metric-label">總契約面值</span>
+            <span class="metric-value hl-gold" id="r-total-val">—</span>
+          </div>
+          <div class="metric">
+            <span class="metric-label">權益總值</span>
+            <span class="metric-value" id="r-equity">—</span>
+          </div>
+        </div>
+
+        <!-- 槓桿分析 -->
+        <div class="card" style="animation-delay:.26s">
+          <div class="card-title">槓桿分析</div>
+
+          <div class="leverage-block">
+            <div class="leverage-label">有效槓桿倍數</div>
+            <div class="leverage-value lev-empty" id="leverage-val">—</div>
+            <div class="leverage-sub" id="leverage-sub-text"></div>
+          </div>
+
+          <div class="lev-bar-wrap">
+            <div class="lev-bar-track">
+              <div class="lev-bar-needle" id="lev-needle" style="left:0%"></div>
+            </div>
+            <div class="lev-bar-labels">
+              <span>1×</span>
+              <span>2×</span>
+              <span>4×</span>
+              <span>6×</span>
+              <span>8×+</span>
+            </div>
+          </div>
+
+          <div class="card-divider"></div>
+          <div class="metric">
+            <span class="metric-label">曝險率（總面值 ÷ 權益）</span>
+            <span class="metric-value hl-sakura" id="r-exposure-pct">—</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <p class="note">
+      小型個股期貨每口 = 100 股；個股期貨每口 = 2,000 股；微台指每點 = 10 元；小台指每點 = 50 元；大台指每點 = 200 元。<br>
+      槓桿倍數 = 總契約面值 ÷ 權益總值。本計算機僅供試算參考，不構成任何投資建議。
+    </p>
+
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    /* ── Contract type definitions ── */
+    const CONTRACT_TYPES = {
+      MSTF: { label: '小型個股期', unit: '元', mult: 100,  hasName: true,  pricePH: '2485',   step: '0.01' },
+      STF:  { label: '個股期貨',   unit: '元', mult: 2000, hasName: true,  pricePH: '100.5',  step: '0.01' },
+      TMF:  { label: '微台指',     unit: '點', mult: 10,   hasName: false, pricePH: '46350',  step: '1'    },
+      MTX:  { label: '小台指',     unit: '點', mult: 50,   hasName: false, pricePH: '22000',  step: '1'    },
+      TX:   { label: '大台指',     unit: '點', mult: 200,  hasName: false, pricePH: '22000',  step: '1'    },
+    };
+
+    const STORAGE_KEY = 'tools-futures-leverage-v1';
+    let rowSeq = 0;
+
+    /* ── Type select options ── */
+    function typeOptions(selected) {
+      return Object.entries(CONTRACT_TYPES).map(([k, v]) =>
+        `<option value="${k}"${k === selected ? ' selected' : ''}>${v.label}</option>`
+      ).join('');
+    }
+
+    /* ── Escape for HTML attribute values ── */
+    function esc(s) {
+      return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    /* ── Add a position row ── */
+    function addRow(data) {
+      data = data || {};
+      rowSeq++;
+      const id    = 'r' + rowSeq;
+      const type  = data.type || 'MSTF';
+      const cfg   = CONTRACT_TYPES[type];
+      const name  = data.name      != null ? esc(data.name)      : '';
+      const price = data.price     != null ? esc(data.price)     : '';
+      const qty   = data.contracts != null ? esc(data.contracts) : '';
+
+      const div = document.createElement('div');
+      div.className = 'pos-row';
+      div.id = id;
+      div.innerHTML =
+        '<div class="pos-type">' +
+          '<div class="pos-mobile-label">類型</div>' +
+          '<select class="pos-select" onchange="onTypeChange(\'' + id + '\')">' +
+            typeOptions(type) +
+          '</select>' +
+        '</div>' +
+        '<div class="pos-name" id="' + id + '-namewrap"' + (!cfg.hasName ? ' style="visibility:hidden"' : '') + '>' +
+          '<div class="pos-mobile-label">名稱</div>' +
+          '<input class="pos-input" type="text" placeholder="股票名稱" value="' + name + '" oninput="calculate()">' +
+        '</div>' +
+        '<div class="pos-price">' +
+          '<div class="pos-mobile-label" id="' + id + '-pricelabel">均價（' + cfg.unit + '）</div>' +
+          '<input class="pos-input" type="number" placeholder="' + cfg.pricePH + '" value="' + price + '" min="0" step="' + cfg.step + '" oninput="calculate()">' +
+        '</div>' +
+        '<div class="pos-qty">' +
+          '<div class="pos-mobile-label">口數</div>' +
+          '<input class="pos-input" type="number" placeholder="1" value="' + qty + '" min="1" step="1" oninput="calculate()">' +
+        '</div>' +
+        '<div class="pos-val">' +
+          '<div class="pos-mobile-label">契約面值</div>' +
+          '<div class="pos-val-display zero" id="' + id + '-val">—</div>' +
+        '</div>' +
+        '<div class="pos-del">' +
+          '<button class="pos-del-btn" onclick="delRow(\'' + id + '\')" aria-label="刪除">✕</button>' +
+        '</div>';
+
+      document.getElementById('pos-list').appendChild(div);
+      calculate();
+    }
+
+    /* ── Handle type change in a row ── */
+    function onTypeChange(id) {
+      const row = document.getElementById(id);
+      const type = row.querySelector('.pos-select').value;
+      const cfg  = CONTRACT_TYPES[type];
+
+      const nameWrap   = document.getElementById(id + '-namewrap');
+      const priceLabel = document.getElementById(id + '-pricelabel');
+      const priceInput = row.querySelector('.pos-price input');
+
+      nameWrap.style.visibility   = cfg.hasName ? '' : 'hidden';
+      priceInput.placeholder       = cfg.pricePH;
+      priceInput.step              = cfg.step;
+      if (priceLabel) priceLabel.textContent = '均價（' + cfg.unit + '）';
+
+      calculate();
+    }
+
+    /* ── Delete a row ── */
+    function delRow(id) {
+      const el = document.getElementById(id);
+      if (el) el.remove();
+      calculate();
+    }
+
+    /* ── Parse all rows ── */
+    function getRows() {
+      return Array.from(document.querySelectorAll('#pos-list .pos-row')).map(function(row) {
+        const type      = row.querySelector('.pos-select').value;
+        const name      = row.querySelector('.pos-name input').value.trim();
+        const priceRaw  = row.querySelector('.pos-price input').value;
+        const qtyRaw    = row.querySelector('.pos-qty input').value;
+        const price     = parseFloat(priceRaw) || 0;
+        const contracts = parseInt(qtyRaw, 10) || 0;
+        const cfg       = CONTRACT_TYPES[type];
+        const value     = price * cfg.mult * contracts;
+        return { id: row.id, type, name, price, contracts, value, cfg, priceRaw, qtyRaw };
+      });
+    }
+
+    /* ── Main calculate function ── */
+    function calculate() {
+      const rows   = getRows();
+      const equity = parseFloat(document.getElementById('equity').value) || 0;
+
+      /* Update per-row value displays */
+      rows.forEach(function(r) {
+        const el = document.getElementById(r.id + '-val');
+        if (!el) return;
+        if (r.value > 0) {
+          el.textContent = '$ ' + fmt(r.value);
+          el.className = 'pos-val-display';
+        } else {
+          el.textContent = '—';
+          el.className = 'pos-val-display zero';
+        }
+      });
+
+      const totalVal = rows.reduce(function(s, r) { return s + r.value; }, 0);
+      const section  = document.getElementById('results-section');
+
+      if (totalVal === 0 || equity === 0) {
+        section.style.display = 'none';
+        return;
+      }
+
+      section.style.display = '';
+      const leverage = totalVal / equity;
+
+      /* Breakdown list */
+      const breakEl = document.getElementById('pos-breakdown');
+      breakEl.innerHTML = rows.map(function(r) {
+        var nameLabel = r.cfg.hasName
+          ? '<span class="type-chip">' + r.cfg.label + '</span>' + (r.name || '（未命名）')
+          : '<span class="type-chip">' + r.cfg.label + '</span>' + r.contracts + '口 @' + r.price + r.cfg.unit;
+        var descLabel = r.cfg.hasName
+          ? r.contracts + '口 × ' + r.price + r.cfg.unit + ' × ' + r.cfg.mult + '股'
+          : r.contracts + '口 × ' + r.cfg.mult + '元/點';
+        var valText = r.value > 0 ? '$ ' + fmt(r.value) : '—';
+        return '<div class="metric">' +
+          '<span class="metric-label">' + nameLabel + '<br>' +
+            '<span style="font-size:.65rem;opacity:.72">' + descLabel + '</span>' +
+          '</span>' +
+          '<span class="metric-value">' + valText + '</span>' +
+        '</div>';
+      }).join('');
+
+      document.getElementById('r-total-val').textContent = '$ ' + fmt(totalVal);
+      document.getElementById('r-equity').textContent    = '$ ' + fmt(equity);
+
+      /* Leverage display */
+      const levEl = document.getElementById('leverage-val');
+      levEl.textContent = leverage.toFixed(2) + '×';
+      levEl.className = 'leverage-value ' + leverageClass(leverage);
+
+      document.getElementById('leverage-sub-text').textContent = leverageDesc(leverage);
+      document.getElementById('r-exposure-pct').textContent    = (leverage * 100).toFixed(1) + '%';
+
+      /* Needle: map 0–8× → 0–100% */
+      const pct = Math.min(leverage / 8, 1) * 100;
+      document.getElementById('lev-needle').style.left = pct.toFixed(1) + '%';
+    }
+
+    function leverageClass(lev) {
+      if (lev < 1.5) return 'lev-safe';
+      if (lev < 3)   return 'lev-moderate';
+      if (lev < 5)   return 'lev-warn';
+      if (lev < 7)   return 'lev-high';
+      return 'lev-critical';
+    }
+
+    function leverageDesc(lev) {
+      if (lev < 1.5) return '保守 — 槓桿偏低，風險可控';
+      if (lev < 3)   return '穩健 — 中等槓桿，留意波動';
+      if (lev < 5)   return '積極 — 槓桿偏高，注意回撤';
+      if (lev < 7)   return '激進 — 高槓桿，波動風險大';
+      return '極高槓桿 — 請謹慎控管部位';
+    }
+
+    function fmt(n) {
+      return Math.round(n).toLocaleString('zh-TW');
+    }
+
+    /* ── Save ── */
+    function saveData() {
+      var rows = Array.from(document.querySelectorAll('#pos-list .pos-row')).map(function(row) {
+        return {
+          type:      row.querySelector('.pos-select').value,
+          name:      row.querySelector('.pos-name input').value,
+          price:     row.querySelector('.pos-price input').value,
+          contracts: row.querySelector('.pos-qty input').value
+        };
+      });
+      var equity = document.getElementById('equity').value;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ positions: rows, equity: equity }));
+      showToast('已儲存');
+    }
+
+    /* ── Clear ── */
+    function clearData() {
+      document.getElementById('pos-list').innerHTML = '';
+      document.getElementById('equity').value = '';
+      document.getElementById('results-section').style.display = 'none';
+      localStorage.removeItem(STORAGE_KEY);
+      rowSeq = 0;
+      showToast('已清除');
+    }
+
+    /* ── Load saved ── */
+    function loadSaved() {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return false;
+      try {
+        var data = JSON.parse(raw);
+        if (data.positions && data.positions.length) {
+          data.positions.forEach(function(p) { addRow(p); });
+        }
+        if (data.equity) document.getElementById('equity').value = data.equity;
+        calculate();
+        return true;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    /* ── Toast ── */
+    var toastTimer;
+    function showToast(msg) {
+      var el = document.getElementById('toast');
+      el.textContent = msg;
+      el.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(function() { el.classList.remove('show'); }, 2000);
+    }
+
+    /* ── Init ── */
+    (function init() {
+      if (!loadSaved()) {
+        addRow();
+      }
+    })();
+  </script>
+</body>
+</html>
