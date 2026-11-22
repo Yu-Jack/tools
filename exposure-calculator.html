@@ -871,11 +871,11 @@
 
         <div class="formula-block">
           <p><span>曝險率</span> = 總股票曝險 ÷ 自有淨資產 × 100%</p>
-          <p>總股票曝險 = 現股市值 + 槓桿ETF有效曝險 + 融資總市值 + 質押股市值</p>
-          <p>總資產 = 現股市值 + 槓桿ETF市值 + 融資總市值 + 質押股市值 + 現金</p>
+          <p>總股票曝險 = 現股市值 + 槓桿ETF有效曝險 + 融資總市值</p>
+          <p>總資產 = 現股市值 + 槓桿ETF市值 + 融資總市值 + 現金</p>
           <p>自有淨資產 = 總資產 − 融資借款 − 質押借款 − 信貸借款</p>
           <p style="margin-top:.4rem; color: var(--border);">槓桿ETF有效曝險 = 市值 × 槓桿倍數（如 00631L 持有100萬 → 曝險200萬）</p>
-          <p>融資自備款 = 融資總市值 − 融資借款　｜　質押股淨值 = 質押股市值 − 質押借款</p>
+          <p>融資自備款 = 融資總市值 − 融資借款　｜　質押股市值僅作擔保品，不計入資產與曝險（質押借款已買進的股票已含在現股市值內）</p>
         </div>
 
         <table class="risk-table">
@@ -917,7 +917,8 @@
 
         <div class="explain-example">
           例：曝險率 200%，市場下跌 10% → 你的淨資產損失 20%。<br>
-          若持有 00631L（2倍槓桿ETF）100萬，其有效市場曝險為 200萬，計入曝險率計算。
+          若持有 00631L（2倍槓桿ETF）100萬，其有效市場曝險為 200萬，計入曝險率計算。<br>
+          例：現股市值 100萬（含質押借款 50萬買入的部分）→ 淨資產 50萬，曝險率 100 ÷ 50 = 200%。
         </div>
       </div>
     </div>
@@ -946,7 +947,8 @@
         </div>
         <div class="pos-note">
           <span class="yes">✓ 填入：</span>用自有現金買的一般股票（含一般 ETF 如 0050、006208）<br>
-          <span class="no">✗ 不要填：</span>槓桿/反向 ETF（如 00631L）→ 填下方 ETF 欄；拿去質押的股票 → 填質押欄；用融資買的股票 → 填融資欄
+          <span class="no">✗ 不要填：</span>槓桿/反向 ETF（如 00631L）→ 填下方 ETF 欄；用融資買的股票 → 填融資欄<br>
+          <span class="yes">✓ 質押：</span>質押借款拿去買的股票，請一併算進現股市值（借出來的錢已包含在現股市值內）
         </div>
       </div>
 
@@ -1004,11 +1006,11 @@
       <div class="pos-section">
         <div class="pos-header">
           <span class="pos-tag tag-pledge">質押</span>
-          <span style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:.78rem;color:var(--ink-light);">以持股作擔保向銀行/券商借款</span>
+          <span style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:.78rem;color:var(--ink-light);">以持股作擔保向銀行/券商借款（借款已買股，股票含在現股市值）</span>
         </div>
         <div class="input-grid">
           <div class="field">
-            <label>質押股市值<span>元（目前市價）</span></label>
+            <label>質押股市值<span>元（擔保品市價，僅算維持率）</span></label>
             <input type="number" id="pledge-val" placeholder="例：2,000,000" min="0" step="1">
           </div>
           <div class="field">
@@ -1019,8 +1021,8 @@
         </div>
         <div class="warning-banner" id="warn-pledge">質押借款不得大於質押股市值。</div>
         <div class="pos-note">
-          <span class="yes">✓ 填入：</span>拿去質押的股票（目前市值）與質押借款金額；質押股你仍然持有，漲跌你全部承擔<br>
-          <span class="no">✗ 不要填：</span>已填在質押欄的股票不要再填一次現股欄，否則市值與曝險都會算兩次
+          <span class="yes">✓ 填入：</span>擔保品目前市值與質押借款金額。質押借款視為已拿去買股票，這些股票已包含在「現股總市值」內<br>
+          <span class="no">✗ 注意：</span>質押股市值<strong>不會</strong>計入總資產與曝險（避免重複計算），只用來計算擔保維持率；質押借款會從淨資產扣除。例：現股 100 萬（含質押借款 50 萬）→ 淨資產 50 萬、曝險 200%
         </div>
       </div>
 
@@ -1127,11 +1129,11 @@
         </div>
 
         <div class="metric">
-          <span class="metric-label">質押股市值</span>
+          <span class="metric-label">質押股市值<span style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:.68rem;color:var(--ink-light);margin-left:.4rem;">擔保品，不計入資產</span></span>
           <span class="metric-value" id="r-pledge-val">—</span>
         </div>
         <div class="metric">
-          <span class="metric-label sub">質押股淨值</span>
+          <span class="metric-label sub">擔保維持率</span>
           <span class="metric-value sub" id="r-pledge-eq">—</span>
         </div>
         <div class="metric">
@@ -1291,7 +1293,7 @@
     </div>
 
     <p class="note">
-      曝險率 = 總股票曝險 ÷ 自有淨資產 × 100%　｜　負債比 = 總借款（融資＋質押＋信貸）÷ 總資產 × 100%<br>
+      曝險率 = 總股票曝險 ÷ 自有淨資產 × 100%（質押借款買的股票已含在現股市值，質押股僅為擔保品）　｜　負債比 = 總借款（融資＋質押＋信貸）÷ 總資產 × 100%<br>
       槓桿ETF（如00631L）以市值 × 槓桿倍數計算有效曝險；反向ETF以負倍數計算，可降低整體曝險<br>
       本計算機僅供參考，不構成任何投資建議。
     </p>
@@ -1460,7 +1462,6 @@
       $('warn-pledge').classList.toggle('show', badPledge);
 
       const marginEq = Math.max(0, marginVal - marginLoan);
-      const pledgeEq = Math.max(0, pledgeVal - pledgeLoan);
 
       // Helper texts
       if (marginVal > 0 && marginLoan >= 0) {
@@ -1475,7 +1476,9 @@
       if (pledgeVal > 0 && pledgeLoan >= 0) {
         const pe = pledgeVal - pledgeLoan;
         const ph = $('pledge-equity-hint');
-        ph.textContent = '質押股淨值：' + fmtNT(pe);
+        ph.textContent = pledgeLoan > 0
+          ? '擔保維持率：' + fmt(pledgeVal / pledgeLoan * 100, 1) + '%'
+          : '擔保維持率：—';
         ph.className = 'helper-text ' + (pe >= 0 ? 'val-ok' : 'val-warn');
       } else {
         $('pledge-equity-hint').textContent = ' ';
@@ -1495,12 +1498,13 @@
 
       // Totals
       // 融資為券商信用交易，不列入負債比（不顯示於銀行聯徵）
-      const totalStockExp    = spotVal + etfExp + marginVal + pledgeVal;
+      // 質押股市值只是擔保品（已含在現股市值內），不計入資產與曝險；質押借款視為已拿去買股票
+      const totalStockExp    = spotVal + etfExp + marginVal;
       const totalLoan        = marginLoan + pledgeLoan + creditLoan;     // 全部借款（摘要用）
       const debtRatioLoan    = pledgeLoan + creditLoan;                  // 負債比負債（排除融資借款）
-      const totalAssets      = spotVal + etfVal + marginVal + pledgeVal + cash;         // 流動比率用（毛額）
-      const debtRatioAssets  = spotVal + etfVal + marginEq + pledgeVal + cash;         // 負債比資產（融資只算自備款）
-      const netAssets        = spotVal + etfVal + marginEq + pledgeEq + cash - creditLoan; // 曝險率用（扣除所有外部負債）
+      const totalAssets      = spotVal + etfVal + marginVal + cash;         // 流動比率用（毛額）
+      const debtRatioAssets  = spotVal + etfVal + marginEq + cash;          // 負債比資產（融資只算自備款）
+      const netAssets        = spotVal + etfVal + marginEq + cash - pledgeLoan - creditLoan; // 曝險率用（扣除所有外部負債）
 
       // Summary panel
       $('r-spot').textContent        = spotVal    > 0 ? fmtNT(spotVal)    : '—';
@@ -1510,7 +1514,7 @@
       $('r-margin-eq').textContent   = marginVal  > 0 ? fmtNT(marginEq)   : '—';
       $('r-margin-loan').textContent = marginVal  > 0 ? fmtNT(marginLoan) : '—';
       $('r-pledge-val').textContent  = pledgeVal  > 0 ? fmtNT(pledgeVal)  : '—';
-      $('r-pledge-eq').textContent   = pledgeVal  > 0 ? fmtNT(pledgeEq)   : '—';
+      $('r-pledge-eq').textContent   = pledgeVal  > 0 && pledgeLoan > 0 ? fmt(pledgeVal / pledgeLoan * 100, 1) + '%' : '—';
       $('r-pledge-loan').textContent = pledgeVal  > 0 ? fmtNT(pledgeLoan) : '—';
       $('r-cash').textContent        = cash       > 0 ? fmtNT(cash)       : '—';
       // 總資產 & 負債明細
